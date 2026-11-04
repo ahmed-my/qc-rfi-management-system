@@ -1,0 +1,191 @@
+{% extends "rfi_management/base.html" %}
+
+{% block title %}
+    Create User | QC RFI Management System
+{% endblock %}
+
+{% block content %}
+
+<div style="max-width: 650px; margin: 0 auto;">
+
+    <div class="card">
+
+        <h1 style="margin-top: 0;">
+            Create QC User
+        </h1>
+
+        <p style="color: #6b7280;">
+            Create a system account and assign its QC role.
+        </p>
+
+
+        <form method="post">
+
+            {% csrf_token %}
+
+
+            {% if form.non_field_errors %}
+
+                <div class="message">
+                    {{ form.non_field_errors }}
+                </div>
+
+            {% endif %}
+
+
+            <div style="margin-bottom: 18px;">
+
+                <label>
+                    First Name
+                </label>
+
+                {{ form.first_name }}
+
+                {% for error in form.first_name.errors %}
+                    <div style="color: #b91c1c;">
+                        {{ error }}
+                    </div>
+                {% endfor %}
+
+            </div>
+
+
+            <div style="margin-bottom: 18px;">
+
+                <label>
+                    Last Name
+                </label>
+
+                {{ form.last_name }}
+
+                {% for error in form.last_name.errors %}
+                    <div style="color: #b91c1c;">
+                        {{ error }}
+                    </div>
+                {% endfor %}
+
+            </div>
+
+
+            <div style="margin-bottom: 18px;">
+
+                <label>
+                    Username
+                </label>
+
+                {{ form.username }}
+
+                {% for error in form.username.errors %}
+                    <div style="color: #b91c1c;">
+                        {{ error }}
+                    </div>
+                {% endfor %}
+
+            </div>
+
+
+            <div style="margin-bottom: 18px;">
+
+                <label>
+                    Password
+                </label>
+
+                {{ form.password }}
+
+                {% for error in form.password.errors %}
+                    <div style="color: #b91c1c;">
+                        {{ error }}
+                    </div>
+                {% endfor %}
+
+            </div>
+
+
+            <div style="margin-bottom: 18px;">
+
+                <label>
+                    Confirm Password
+                </label>
+
+                {{ form.password_confirm }}
+
+                {% for error in form.password_confirm.errors %}
+                    <div style="color: #b91c1c;">
+                        {{ error }}
+                    </div>
+                {% endfor %}
+
+            </div>
+
+
+            <div style="margin-bottom: 18px;">
+
+                <label>
+                    QC Role
+                </label>
+
+                {{ form.role }}
+
+                {% for error in form.role.errors %}
+                    <div style="color: #b91c1c;">
+                        {{ error }}
+                    </div>
+                {% endfor %}
+
+            </div>
+
+
+            <div style="margin-bottom: 25px;">
+
+                <label>
+                    {{ form.is_active_qc }}
+                    QC access active
+                </label>
+
+            </div>
+
+
+            <div
+                style="
+                    display: flex;
+                    gap: 10px;
+                "
+            >
+
+                <button
+                    type="submit"
+                    style="
+                        padding: 11px 18px;
+                        border: none;
+                        border-radius: 5px;
+                        background: #172033;
+                        color: white;
+                        cursor: pointer;
+                    "
+                >
+                    Create User
+                </button>
+
+
+                <a
+                    href="{% url 'user_list' %}"
+                    style="
+                        padding: 11px 18px;
+                        border-radius: 5px;
+                        text-decoration: none;
+                        background: #e5e7eb;
+                        color: #1f2937;
+                    "
+                >
+                    Cancel
+                </a>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+{% endblock %}

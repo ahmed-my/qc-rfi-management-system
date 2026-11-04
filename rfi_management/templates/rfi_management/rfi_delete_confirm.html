@@ -1,0 +1,72 @@
+```django
+{% extends "rfi_management/base.html" %}
+
+{% block title %}Delete RFI {{ rfi.internal_reference }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Delete RFI</h1>
+        <p>Review this record carefully before confirming deletion.</p>
+    </div>
+    <a href="{% url 'rfi_detail' rfi_id=rfi.id %}" class="btn">
+        Cancel
+    </a>
+</div>
+
+<div class="card">
+    <h2>Record to Delete</h2>
+
+    <div class="detail-grid">
+        <div>
+            <strong>Internal Reference</strong>
+            <span>{{ rfi.internal_reference }}</span>
+        </div>
+        <div>
+            <strong>Contractor RFI Number</strong>
+            <span>{{ rfi.rfi_number }}</span>
+        </div>
+        <div>
+            <strong>Contractor</strong>
+            <span>{{ rfi.contractor }}</span>
+        </div>
+        <div>
+            <strong>Current Status</strong>
+            <span>{{ rfi.get_status_display }}</span>
+        </div>
+    </div>
+
+    {% if has_inspections or has_punch_lists %}
+        <div class="message message-error" style="margin-top: 20px;">
+            <strong>Deletion blocked</strong>
+            <p>
+                This RFI has associated inspection or punch-list records.
+                To protect the project history, it cannot be deleted using
+                this screen. Reassign the RFI or contact your system
+                administrator to review the duplicate.
+            </p>
+        </div>
+    {% else %}
+        <div class="message message-error" style="margin-top: 20px;">
+            <strong>Warning: this action cannot be undone.</strong>
+            <p>
+                This RFI has no inspection or punch-list records. Deleting
+                it will also remove its related records that are configured
+                to be deleted with the RFI, including its assignment and
+                RFI history records.
+            </p>
+        </div>
+
+        <form method="post" class="form-actions">
+            {% csrf_token %}
+            <a href="{% url 'rfi_detail' rfi_id=rfi.id %}" class="btn">
+                Keep RFI
+            </a>
+            <button type="submit" class="btn btn-danger">
+                Delete This RFI
+            </button>
+        </form>
+    {% endif %}
+</div>
+{% endblock %}
+```

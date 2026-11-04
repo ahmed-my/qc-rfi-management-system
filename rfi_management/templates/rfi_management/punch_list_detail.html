@@ -1,0 +1,221 @@
+
+{% extends "rfi_management/base.html" %}
+
+{% block title %}Punch List Details{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h1>Punch List {{ punch_list.punch_list_number }}</h1>
+        <p>Outstanding QC items and verification status.</p>
+    </div>
+
+    <div>
+        <a href="{% url 'rfi_detail' rfi_id=rfi.id %}" class="btn">
+            Back to RFI
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <h2>Punch List Information</h2>
+
+    <div class="detail-grid">
+        <div>
+            <strong>Punch List Number</strong>
+            <p>{{ punch_list.punch_list_number }}</p>
+        </div>
+
+        <div>
+            <strong>Internal RFI Reference</strong>
+            <p>{{ rfi.internal_reference }}</p>
+        </div>
+
+        <div>
+            <strong>Contractor RFI Number</strong>
+            <p>{{ rfi.rfi_number }}</p>
+        </div>
+
+        <div>
+            <strong>Inspection Number</strong>
+            <p>#{{ inspection.inspection_number }}</p>
+        </div>
+
+        <div>
+            <strong>Inspection Date</strong>
+            <p>{{ inspection.inspection_date|date:"d M Y" }}</p>
+        </div>
+
+        <div>
+            <strong>Date Created</strong>
+            <p>{{ punch_list.date_created|date:"d M Y" }}</p>
+        </div>
+
+        <div>
+            <strong>Status</strong>
+            <p>{{ punch_list.get_status_display }}</p>
+        </div>
+
+        {% if punch_list.signed_at %}
+        <div>
+            <strong>Signed Copy Uploaded</strong>
+            <p>{{ punch_list.signed_at|date:"d M Y, H:i" }}</p>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if punch_list.remarks %}
+    <div>
+        <strong>Remarks</strong>
+        <p>{{ punch_list.remarks }}</p>
+    </div>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>Client-Signed Punch List</h2>
+
+    <p>
+        After the client signs the punch list, upload the scanned or
+        electronic copy here. Accepted formats: PDF, JPG, JPEG and PNG.
+        Maximum file size: 10 MB.
+    </p>
+
+    {% if punch_list.status == "DRAFT" %}
+        {% if user.profile.role == "ADMIN" or user.profile.role == "SUPERVISOR" or user.profile.role == "INSPECTOR" %}
+        <form
+            method="post"
+            action="{% url 'punch_list_signed_upload' punch_list_id=punch_list.id %}"
+            enctype="multipart/form-data"
+        >
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label for="signed_file">Signed Punch List</label>
+                <input
+                    type="file"
+                    id="signed_file"
+                    name="signed_file"
+                    accept=".pdf,.jpg,.jpeg,.png"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="description">Document Description</label>
+                <input
+                    type="text"
+                    id="description"
+                    name="description"
+                    value="Client-signed punch list"
+                    maxlength="255"
+                >
+            </div>
+
+            <button type="submit" class="btn btn-primary">
+                Upload Signed Copy
+            </button>
+        </form>
+        {% endif %}
+    {% else %}
+        <p>
+            The punch list is currently
+            <strong>{{ punch_list.get_status_display }}</strong>.
+        </p>
+    {% endif %}
+   
+    {% if signed_documents %}
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Document</th>
+                        <th>Description</th>
+                        <th>Uploaded By</th>
+                        <th>Upload Date</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for document in signed_documents %}
+                        <tr>
+                            <td>{{ document.file.name }}</td>
+                            <td>{{ document.description|default:"Client-signed punch list" }}</td>
+                            <td>
+                                {{ document.uploaded_by.get_full_name|default:document.uploaded_by.username }}
+                            </td>
+                            <td>{{ document.uploaded_at|date:"d M Y, H:i" }}</td>
+                            <td>
+                                <a href="{{ document.file.url }}" target="_blank" rel="noopener">
+                                    View / Download
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <p>No signed punch-list document has been uploaded yet.</p>
+    {% endif %}
+
+</div>
+
+<div class="card">
+    <div class="page-header">
+        <div>
+            <h2>Punch Items</h2>
+            <p>Each outstanding item is tracked separately.</p>
+        </div>
+
+        {% if can_add_items %}
+        <a
+            href="{% url 'punch_item_create' punch_list_id=punch_list.id %}"
+            class="btn btn-primary"
+        >
+            Add Punch Item
+        </a>
+        {% endif %}
+    </div>
+
+    {% if items %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Item No.</th>
+                    <th>Item Tag</th>
+                    <th>Description</th>
+                    <th>Category</th>
+                    <th>Responsible Party</th>
+                    <th>Target Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td>{{ item.item_number }}</td>
+                    <td>{{ item.item_tag|default:"—" }}</td>
+                    <td>{{ item.description }}</td>
+                    <td>{{ item.get_category_display }}</td>
+                    <td>{{ item.responsible_party|default:"—" }}</td>
+                    <td>
+                        {% if item.target_date %}
+                            {{ item.target_date|date:"d M Y" }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                    <td>{{ item.get_status_display }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+        <p>No punch items have been added yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

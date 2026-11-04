@@ -1,0 +1,22 @@
+{% extends "rfi_management/base.html" %}
+
+{% block title %}Return RFI to Supervisor{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1>Return RFI to Supervisor</h1>
+    <p>RFI: <strong>{{ rfi.internal_reference }}</strong></p>
+    <p>
+        This will change the RFI status to
+        <strong>Returned to Supervisor</strong>.
+    </p>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        <button type="submit" class="btn btn-warning">Return to Supervisor</button>
+        <a href="{% url 'rfi_detail' rfi.id %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

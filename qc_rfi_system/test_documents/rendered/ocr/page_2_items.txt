@@ -1,0 +1,91 @@
+RFI TABLE OCR
+====================================================================================================
+
+ITEM 13
+--------------------------------------------------------------------------------
+No            : 
+Item Code     : 
+Description   : ir Bek | :
+Area          : 
+Subsystem     : Tp grey po ergs CD or re Uh lS SS om a Lee ok . eb ke - - . I. i "a ce shy . 7 ot A Ke i es Si By, ; eee a : I; Ath vt Bal ts BE \. ' rie aoe ss oe a li eee meat et [rs gl ca dy , + j ren . vy ore -- oe e oe . ae ' i) Rial " !
+IWP Code      : -
+Done          : checked
+Failed        : blank
+
+ITEM 14
+--------------------------------------------------------------------------------
+No            : 
+Item Code     : 
+Description   : - mane _ TW ) = |
+Area          : 
+Subsystem     : ey "0 Ae ey. my reiey ree ' stati atet on Ree ee isa Bl Fe iad i aes ea nee ; Lae! ee SF a 2S . a5] 1 wae!
+IWP Code      : al
+Done          : checked
+Failed        : checked
+
+ITEM 15
+--------------------------------------------------------------------------------
+No            : 
+Item Code     : 
+Description   : ia a : arat | 'i :
+Area          : 
+Subsystem     : . an -
+IWP Code      : ioe re ee dy fae yi
+Done          : checked
+Failed        : checked
+
+ITEM 16
+--------------------------------------------------------------------------------
+No            : 
+Item Code     : 
+Description   : Ai wooo Ww rT a Ye ae ee ea oe i
+Area          : 
+Subsystem     : "oT, ee
+IWP Code      : 
+Done          : blank
+Failed        : blank
+
+ITEM 17
+--------------------------------------------------------------------------------
+No            : 
+Item Code     : imchshadde
+Description   : ue I | re = : '
+Area          : 
+Subsystem     : 7 aa
+IWP Code      : i
+Done          : checked
+Failed        : blank
+
+ITEM 18
+--------------------------------------------------------------------------------
+No            : 
+Item Code     : 
+Description   : Tu 4 : | ase _ 2 | | ;
+Area          : 
+Subsystem     : 110 Oi
+IWP Code      : 
+Done          : checked
+Failed        : checked
+
+ITEM 19
+--------------------------------------------------------------------------------
+No            : 
+Item Code     : a
+Description   : 2 Cn ey _ ; . = | th
+Area          : 
+Subsystem     : all
+IWP Code      : rw a
+Done          : checked
+Failed        : checked
+
+ITEM 20
+--------------------------------------------------------------------------------
+No            : 
+Item Code     : COOaeeen
+Description   : SO SO Pee daa aia er eee ee ero ris | ! ee ane |
+Area          : 
+Subsystem     : "1! As en ' ait, ree vey Ero iw : er es Teh Berar a tee Yee aT Leaner Chae ae a erismiir aT ell " i iM
+IWP Code      : 
+Done          : checked
+Failed        : checked
+
