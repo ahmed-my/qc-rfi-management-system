@@ -1,0 +1,235 @@
+{% extends "rfi_management/base.html" %}
+
+{% block title %}Register RFI{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+
+    <div>
+        <h1>Register New RFI</h1>
+        <p>
+            Record a newly received Request for Inspection.
+        </p>
+    </div>
+
+    <a href="{% url 'rfi_list' %}" class="btn">
+        ← RFI Register
+    </a>
+
+</div>
+
+
+<div class="card">
+
+    <form method="post">
+
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="form-errors">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+
+        <h2>RFI Identification</h2>
+
+
+        <div class="form-grid">
+
+            <div class="form-group">
+                <label>RFI Number</label>
+                {{ form.rfi_number }}
+
+                {% for error in form.rfi_number.errors %}
+                    <div class="field-error">
+                        {{ error }}
+                    </div>
+                {% endfor %}
+            </div>
+
+
+            <div class="form-group">
+                <label>Revision</label>
+                {{ form.revision }}
+            </div>
+
+
+            <div class="form-group">
+                <label>Certificate Code</label>
+                {{ form.certificate_code }}
+            </div>
+
+
+            <div class="form-group">
+                <label>Client RFI Number</label>
+                {{ form.client_rfi_number }}
+            </div>
+
+        </div>
+
+        <h2>Planning</h2>
+
+        <div class="form-grid">
+
+            <div class="form-group">
+                <label>Date Received</label>
+                {{ form.date_received }}
+
+                {% for error in form.date_received.errors %}
+                    <div class="field-error">
+                        {{ error }}
+                    </div>
+                {% endfor %}
+            </div>
+
+
+            <div class="form-group">
+                <label>Inspection Planned Start</label>
+                {{ form.original_planned_start }}
+
+                {% for error in form.original_planned_start.errors %}
+                    <div class="field-error">
+                        {{ error }}
+                    </div>
+                {% endfor %}
+            </div>
+
+
+            <div class="form-group">
+                <label>Inspection Planned End</label>
+                {{ form.original_planned_end }}
+
+                {% for error in form.original_planned_end.errors %}
+                    <div class="field-error">
+                        {{ error }}
+                    </div>
+                {% endfor %}
+            </div>
+
+
+            <div class="form-group">
+                <label>Planned Time</label>
+                {{ form.planned_time }}
+
+                {% for error in form.planned_time.errors %}
+                    <div class="field-error">
+                        {{ error }}
+                    </div>
+                {% endfor %}
+            </div>
+
+
+            <div class="form-group">
+                <label>Contractor</label>
+                {{ form.contractor }}
+
+                {% for error in form.contractor.errors %}
+                    <div class="field-error">
+                        {{ error }}
+                    </div>
+                {% endfor %}
+            </div>
+
+        </div>
+
+        <h2>Technical Information</h2>
+
+
+        <div class="form-grid">
+
+            <div class="form-group">
+                <label>Discipline</label>
+                {{ form.discipline }}
+            </div>
+
+
+            <div class="form-group">
+                <label>Area</label>
+                {{ form.area }}
+            </div>
+
+
+            <div class="form-group">
+                <label>Unit</label>
+                {{ form.unit }}
+            </div>
+
+
+            <div class="form-group">
+                <label>System</label>
+                {{ form.system }}
+            </div>
+
+
+            <div class="form-group">
+                <label>Subsystem</label>
+                {{ form.subsystem }}
+            </div>
+
+
+            <div class="form-group">
+                <label>QC Code</label>
+                {{ form.qc_code }}
+            </div>
+
+
+            <div class="form-group">
+                <label>ITP Document</label>
+                {{ form.itp_document }}
+            </div>
+
+
+            <div class="form-group">
+                <label>Form Code</label>
+                {{ form.form_code }}
+            </div>
+
+
+            <div class="form-group">
+                <label>IWP Code</label>
+                {{ form.iwp_code }}
+            </div>
+
+
+            <div class="form-group">
+                <label>Inspection Activity</label>
+                {{ form.inspection_activity }}
+            </div>
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label>Reference Documents</label>
+
+            {{ form.reference_documents }}
+
+        </div>
+
+
+        <div class="form-actions">
+
+            <button
+                type="submit"
+                class="btn btn-primary"
+            >
+                Register RFI
+            </button>
+
+            <a
+                href="{% url 'rfi_list' %}"
+                class="btn"
+            >
+                Cancel
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}

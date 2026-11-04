@@ -1,0 +1,678 @@
+{% extends "rfi_management/base.html" %}
+
+{% block title %}Dashboard | QC RFI Management System{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Dashboard styles are scoped to prevent conflicts with base.html. */
+
+    .qc-dashboard {
+        width: 100%;
+        max-width: 1440px;
+        margin: 0 auto;
+        color: #172b4d;
+    }
+
+    .qc-dashboard,
+    .qc-dashboard * {
+        box-sizing: border-box;
+    }
+
+    .qc-dashboard .qc-welcome {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 24px;
+        margin-bottom: 28px;
+        padding: 28px 30px;
+        border: 1px solid #dbe5f0;
+        border-radius: 14px;
+        background: #ffffff;
+    }
+
+    .qc-dashboard .qc-welcome-copy {
+        min-width: 0;
+    }
+
+    .qc-dashboard .qc-eyebrow {
+        margin: 0 0 10px;
+        color: #526987;
+        font-size: 0.75rem;
+        font-weight: 750;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+    }
+
+    .qc-dashboard .qc-welcome h1 {
+        margin: 0 0 10px;
+        color: #172b4d;
+        font-size: clamp(1.55rem, 2.4vw, 2rem);
+        font-weight: 750;
+        line-height: 1.25;
+        overflow-wrap: anywhere;
+    }
+
+    .qc-dashboard .qc-welcome-description {
+        max-width: 650px;
+        margin: 0;
+        color: #64748b;
+        font-size: 0.93rem;
+        line-height: 1.7;
+    }
+
+    .qc-dashboard .qc-role-panel {
+        flex: 0 0 auto;
+        min-width: 145px;
+        padding: 14px 18px;
+        border: 1px solid #dbe5f0;
+        border-radius: 10px;
+        background: #f8fafc;
+    }
+
+    .qc-dashboard .qc-role-label {
+        display: block;
+        margin-bottom: 5px;
+        color: #64748b;
+        font-size: 0.73rem;
+        font-weight: 650;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+
+    .qc-dashboard .qc-role-value {
+        display: block;
+        color: #1d4ed8;
+        font-size: 0.95rem;
+        font-weight: 750;
+    }
+
+    .qc-dashboard .qc-section {
+        margin-top: 28px;
+    }
+
+    .qc-dashboard .qc-section-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: 16px;
+        margin-bottom: 17px;
+    }
+
+    .qc-dashboard .qc-section-heading h2 {
+        margin: 0 0 5px;
+        color: #172b4d;
+        font-size: 1.2rem;
+        font-weight: 750;
+    }
+
+    .qc-dashboard .qc-section-heading p {
+        margin: 0;
+        color: #64748b;
+        font-size: 0.88rem;
+        line-height: 1.6;
+    }
+
+    /* Statistics */
+
+    .qc-dashboard .qc-stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+        margin-bottom: 28px;
+    }
+
+    .qc-dashboard .qc-stat-card {
+        position: relative;
+        min-width: 0;
+        padding: 22px;
+        overflow: hidden;
+        border: 1px solid #dbe5f0;
+        border-radius: 12px;
+        background: #ffffff;
+    }
+
+    .qc-dashboard .qc-stat-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+
+    .qc-dashboard .qc-stat-label {
+        margin: 0;
+        color: #526987;
+        font-size: 0.88rem;
+        font-weight: 650;
+    }
+
+    .qc-dashboard .qc-stat-icon {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex: 0 0 40px;
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: #edf4ff;
+        color: #2459a9;
+        font-size: 0.92rem;
+        font-weight: 800;
+    }
+
+    .qc-dashboard .qc-stat-number {
+        margin: 0 0 7px;
+        color: #172b4d;
+        font-size: 2.15rem;
+        font-weight: 800;
+        line-height: 1.1;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .qc-dashboard .qc-stat-caption {
+        margin: 0;
+        color: #64748b;
+        font-size: 0.83rem;
+        line-height: 1.5;
+    }
+
+    /* Navigation cards */
+
+    .qc-dashboard .qc-actions-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+    }
+
+    .qc-dashboard .qc-action-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+        min-width: 0;
+        padding: 22px;
+        border: 1px solid #dbe5f0;
+        border-radius: 12px;
+        background: #ffffff;
+        transition: border-color 0.18s ease,
+                    box-shadow 0.18s ease,
+                    transform 0.18s ease;
+    }
+
+    .qc-dashboard .qc-action-card:hover {
+        border-color: #b7c9e1;
+        box-shadow: 0 5px 16px rgba(23, 43, 77, 0.06);
+        transform: translateY(-2px);
+    }
+
+    .qc-dashboard .qc-action-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 44px;
+        width: 44px;
+        height: 44px;
+        border-radius: 11px;
+        background: #edf4ff;
+        color: #2459a9;
+        font-size: 1rem;
+        font-weight: 800;
+    }
+
+    .qc-dashboard .qc-action-content {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        align-items: flex-start;
+        min-width: 0;
+    }
+
+    .qc-dashboard .qc-action-content h3 {
+        margin: 1px 0 8px;
+        color: #172b4d;
+        font-size: 1rem;
+        font-weight: 750;
+        line-height: 1.4;
+    }
+
+    .qc-dashboard .qc-action-description {
+        margin: 0 0 16px;
+        color: #64748b;
+        font-size: 0.87rem;
+        line-height: 1.65;
+        overflow-wrap: anywhere;
+    }
+
+    .qc-dashboard .qc-action-links {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px 18px;
+        width: 100%;
+        margin-top: auto;
+    }
+
+    .qc-dashboard .qc-action-link {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        max-width: 100%;
+        color: #2459a9;
+        font-size: 0.86rem;
+        font-weight: 750;
+        line-height: 1.5;
+        text-decoration: none;
+        overflow-wrap: anywhere;
+    }
+
+    .qc-dashboard .qc-action-link:hover {
+        color: #173f80;
+        text-decoration: underline;
+    }
+
+    .qc-dashboard .qc-action-link:focus-visible {
+        outline: 2px solid #2459a9;
+        outline-offset: 4px;
+        border-radius: 3px;
+    }
+
+    .qc-dashboard .qc-arrow {
+        flex: 0 0 auto;
+        font-size: 1rem;
+    }
+
+    .qc-dashboard .qc-dashboard-note {
+        margin-top: 24px;
+        padding: 14px 17px;
+        border: 1px solid #dbe5f0;
+        border-radius: 10px;
+        background: #f8fafc;
+        color: #526987;
+        font-size: 0.84rem;
+        line-height: 1.65;
+    }
+
+    @media (max-width: 900px) {
+        .qc-dashboard .qc-stats-grid {
+            gap: 12px;
+        }
+
+        .qc-dashboard .qc-stat-card {
+            padding: 17px;
+        }
+
+        .qc-dashboard .qc-actions-grid {
+            gap: 12px;
+        }
+    }
+
+    @media (max-width: 650px) {
+        .qc-dashboard .qc-welcome {
+            align-items: flex-start;
+            flex-direction: column;
+            padding: 22px;
+        }
+
+        .qc-dashboard .qc-role-panel {
+            width: 100%;
+        }
+
+        .qc-dashboard .qc-stats-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .qc-dashboard .qc-stat-card {
+            padding: 18px;
+        }
+
+        .qc-dashboard .qc-stat-top {
+            margin-bottom: 12px;
+        }
+
+        .qc-dashboard .qc-actions-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .qc-dashboard .qc-section-heading {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .qc-dashboard .qc-action-card {
+            transition: none;
+        }
+
+        .qc-dashboard .qc-action-card:hover {
+            transform: none;
+        }
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<div class="qc-dashboard">
+
+    <section class="qc-welcome">
+        <div class="qc-welcome-copy">
+            <p class="qc-eyebrow">Quality Control · Inspection Tracking</p>
+
+            <h1>
+                Welcome, {{ request.user.get_full_name|default:request.user.username }}
+            </h1>
+
+            <p class="qc-welcome-description">
+                Your workspace for managing Requests for Inspection,
+                coordinating QC activities, and tracking inspection records.
+            </p>
+        </div>
+
+        <div class="qc-role-panel">
+            <span class="qc-role-label">Signed in as</span>
+            <span class="qc-role-value">{{ profile.get_role_display }}</span>
+        </div>
+    </section>
+
+
+    {% if profile.role == "ADMIN" %}
+
+        <section class="qc-section">
+            <div class="qc-section-heading">
+                <div>
+                    <h2>System Overview</h2>
+                    <p>A summary of user accounts and key system functions.</p>
+                </div>
+            </div>
+
+            <div class="qc-stats-grid">
+
+                <article class="qc-stat-card">
+                    <div class="qc-stat-top">
+                        <p class="qc-stat-label">Total Users</p>
+                        <span class="qc-stat-icon" aria-hidden="true">U</span>
+                    </div>
+
+                    <p class="qc-stat-number">{{ total_users }}</p>
+                    <p class="qc-stat-caption">
+                        Registered system user{{ total_users|pluralize }}
+                    </p>
+                </article>
+
+                <article class="qc-stat-card">
+                    <div class="qc-stat-top">
+                        <p class="qc-stat-label">Supervisors</p>
+                        <span class="qc-stat-icon" aria-hidden="true">S</span>
+                    </div>
+
+                    <p class="qc-stat-number">{{ supervisor_count }}</p>
+                    <p class="qc-stat-caption">
+                        Registered supervisor{{ supervisor_count|pluralize }}
+                    </p>
+                </article>
+
+                <article class="qc-stat-card">
+                    <div class="qc-stat-top">
+                        <p class="qc-stat-label">Inspectors</p>
+                        <span class="qc-stat-icon" aria-hidden="true">I</span>
+                    </div>
+
+                    <p class="qc-stat-number">{{ inspector_count }}</p>
+                    <p class="qc-stat-caption">
+                        Registered inspector{{ inspector_count|pluralize }}
+                    </p>
+                </article>
+
+            </div>
+        </section>
+
+        <section class="qc-section">
+            <div class="qc-section-heading">
+                <div>
+                    <h2>Quick Actions</h2>
+                    <p>Access the functions you use to manage the QC system.</p>
+                </div>
+            </div>
+
+            <div class="qc-actions-grid">
+
+                <article class="qc-action-card">
+                    <div class="qc-action-icon" aria-hidden="true">RFI</div>
+
+                    <div class="qc-action-content">
+                        <h3>RFI Register</h3>
+
+                        <p class="qc-action-description">
+                            Review registered requests, check their current
+                            status, and open individual RFI records.
+                        </p>
+
+                        <div class="qc-action-links">
+                            <a href="{% url 'rfi_list' %}" class="qc-action-link">
+                                Open RFI Register
+                                <span class="qc-arrow" aria-hidden="true">→</span>
+                            </a>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="qc-action-card">
+                    <div class="qc-action-icon" aria-hidden="true">+</div>
+
+                    <div class="qc-action-content">
+                        <h3>Receive New RFI</h3>
+
+                        <p class="qc-action-description">
+                            Register a newly received Request for Inspection
+                            and record its details in the system.
+                        </p>
+
+                        <div class="qc-action-links">
+                            <a href="{% url 'rfi_create' %}" class="qc-action-link">
+                                Register an RFI
+                                <span class="qc-arrow" aria-hidden="true">→</span>
+                            </a>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="qc-action-card">
+                    <div class="qc-action-icon" aria-hidden="true">U</div>
+
+                    <div class="qc-action-content">
+                        <h3>User Management</h3>
+
+                        <p class="qc-action-description">
+                            View and manage system user accounts.
+                        </p>
+
+                        <div class="qc-action-links">
+                            <a href="{% url 'user_list' %}" class="qc-action-link">
+                                Manage Users
+                                <span class="qc-arrow" aria-hidden="true">→</span>
+                            </a>
+                        </div>
+                    </div>
+                </article>
+
+            </div>
+        </section>
+
+
+    {% elif profile.role == "SUPERVISOR" %}
+
+        <section class="qc-section">
+            <div class="qc-section-heading">
+                <div>
+                    <h2>Quality Control Operations</h2>
+                    <p>Manage RFIs and access the relevant inspection records.</p>
+                </div>
+            </div>
+
+            <div class="qc-actions-grid">
+
+                <article class="qc-action-card">
+                    <div class="qc-action-icon" aria-hidden="true">RFI</div>
+                    <div class="qc-action-content">
+                        <h3>RFI Register</h3>
+                        <p class="qc-action-description">
+                            Review registered requests and check their status,
+                            planning information, and inspection history.
+                        </p>
+                        <div class="qc-action-links">
+                            <a href="{% url 'rfi_list' %}" class="qc-action-link">
+                                Open RFI Register
+                                <span class="qc-arrow" aria-hidden="true">→</span>
+                            </a>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="qc-action-card">
+                    <div class="qc-action-icon" aria-hidden="true">+</div>
+                    <div class="qc-action-content">
+                        <h3>Receive New RFI</h3>
+                        <p class="qc-action-description">
+                            Register a new request for inspection.
+                        </p>
+                        <div class="qc-action-links">
+                            <a href="{% url 'rfi_create' %}" class="qc-action-link">
+                                Receive RFI
+                                <span class="qc-arrow" aria-hidden="true">→</span>
+                            </a>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="qc-action-card">
+                    <div class="qc-action-icon" aria-hidden="true">A</div>
+                    <div class="qc-action-content">
+                        <h3>Assignments</h3>
+                        <p class="qc-action-description">
+                            Open an RFI record to access the available
+                            inspector assignment actions.
+                        </p>
+                        <div class="qc-action-links">
+                            <a href="{% url 'rfi_list' %}" class="qc-action-link">
+                                Find an RFI
+                                <span class="qc-arrow" aria-hidden="true">→</span>
+                            </a>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="qc-action-card">
+                    <div class="qc-action-icon" aria-hidden="true">F</div>
+                    <div class="qc-action-content">
+                        <h3>Follow-up and Renewals</h3>
+                        <p class="qc-action-description">
+                            Review RFI statuses, planned dates, and inspection
+                            history to identify records requiring attention.
+                        </p>
+                        <div class="qc-action-links">
+                            <a href="{% url 'rfi_list' %}" class="qc-action-link">
+                                Review RFI Records
+                                <span class="qc-arrow" aria-hidden="true">→</span>
+                            </a>
+                        </div>
+                    </div>
+                </article>
+
+            </div>
+        </section>
+
+
+    {% elif profile.role == "INSPECTOR" %}
+
+        <section class="qc-section">
+            <div class="qc-section-heading">
+                <div>
+                    <h2>My QC Workspace</h2>
+                    <p>Access assigned RFIs and continue your inspection work.</p>
+                </div>
+            </div>
+
+            <div class="qc-actions-grid">
+
+                <article class="qc-action-card">
+                    <div class="qc-action-icon" aria-hidden="true">+</div>
+                    <div class="qc-action-content">
+                        <h3>Register New RFI</h3>
+                        <p class="qc-action-description">
+                            Register a newly received Request for Inspection and record its details.
+                        </p>
+                        <div class="qc-action-links">
+                            <a href="{% url 'rfi_create' %}" class="qc-action-link">
+                                Register an RFI
+                                <span class="qc-arrow" aria-hidden="true">→</span>
+                            </a>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="qc-action-card">
+                    <div class="qc-action-icon" aria-hidden="true">A</div>
+                    <div class="qc-action-content">
+                        <h3>My Assignments</h3>
+                        <p class="qc-action-description">
+                            View your assigned requests for inspection and
+                            open the relevant records.
+                        </p>
+                        <div class="qc-action-links">
+                            <a href="{% url 'inspector_rfi_list' %}" class="qc-action-link">
+                                View Assigned RFIs
+                                <span class="qc-arrow" aria-hidden="true">→</span>
+                            </a>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="qc-action-card">
+                    <div class="qc-action-icon" aria-hidden="true">I</div>
+                    <div class="qc-action-content">
+                        <h3>Inspections</h3>
+                        <p class="qc-action-description">
+                            Open an assigned RFI to access the available
+                            inspection workflow.
+                        </p>
+                        <div class="qc-action-links">
+                            <a href="{% url 'inspector_rfi_list' %}" class="qc-action-link">
+                                Access Inspections
+                                <span class="qc-arrow" aria-hidden="true">→</span>
+                            </a>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="qc-action-card">
+                    <div class="qc-action-icon" aria-hidden="true">P</div>
+                    <div class="qc-action-content">
+                        <h3>Results and Punch Lists</h3>
+                        <p class="qc-action-description">
+                            Access assigned RFI records to work with available
+                            inspection results and punch-list records.
+                        </p>
+                        <div class="qc-action-links">
+                            <a href="{% url 'inspector_rfi_list' %}" class="qc-action-link">
+                                Open Assigned RFIs
+                                <span class="qc-arrow" aria-hidden="true">→</span>
+                            </a>
+                        </div>
+                    </div>
+                </article>
+
+            </div>
+        </section>
+
+    {% endif %}
+
+    <div class="qc-dashboard-note">
+        <strong>QC workspace:</strong>
+        Use the navigation above or the dashboard links to access the
+        functions available to your account.
+    </div>
+
+</div>
+
+{% endblock %}

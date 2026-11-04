@@ -1,0 +1,588 @@
+{% extends "rfi_management/base.html" %}
+
+{% block title %}My Assigned RFIs{% endblock %}
+
+{% block extra_css %}
+<style>
+    .inspector-rfi-page {
+        max-width: 1440px;
+        margin: 0 auto;
+    }
+
+    /* Search panel */
+    .inspector-search-panel {
+        width: 100%;
+        margin: 0 0 24px;
+        padding: 24px;
+        border: 1px solid #dbe5f0;
+        border-radius: 14px;
+        background: #ffffff;
+        box-sizing: border-box;
+        box-shadow: 0 2px 8px rgba(23, 43, 77, 0.03);
+    }
+
+    .inspector-search-panel h2 {
+        margin: 0 0 6px;
+        color: #172b4d;
+        font-size: 1.05rem;
+        font-weight: 750;
+    }
+
+    .inspector-search-panel p {
+        margin: 0 0 22px;
+        color: #64748b;
+        font-size: 0.88rem;
+        line-height: 1.6;
+    }
+
+    /* Search controls */
+    .inspector-search-form {
+        display: grid;
+        grid-template-columns: minmax(0, 1.5fr) minmax(220px, 0.9fr) auto;
+        align-items: end;
+        gap: 18px;
+    }
+
+    .inspector-search-field {
+        min-width: 0;
+    }
+
+    .inspector-search-field label {
+        display: block;
+        margin-bottom: 8px;
+        color: #334155;
+        font-size: 0.83rem;
+        font-weight: 700;
+    }
+
+    .inspector-search-field input,
+    .inspector-search-field select {
+        display: block;
+        width: 100%;
+        height: 46px;
+        padding: 0 14px;
+        border: 1px solid #cbd5e1;
+        border-radius: 9px;
+        background: #ffffff;
+        color: #172b4d;
+        font-family: inherit;
+        font-size: 0.9rem;
+        box-sizing: border-box;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .inspector-search-field input::placeholder {
+        color: #94a3b8;
+    }
+
+    .inspector-search-field input:hover,
+    .inspector-search-field select:hover {
+        border-color: #94a3b8;
+    }
+
+    .inspector-search-field input:focus,
+    .inspector-search-field select:focus {
+        border-color: #2563eb;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+
+    /* Buttons aligned with the controls */
+    .inspector-search-actions {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+    }
+
+    .inspector-search-actions .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 46px;
+        min-width: 100px;
+        padding: 0 18px;
+        border-radius: 9px;
+        font-family: inherit;
+        font-size: 0.86rem;
+        font-weight: 700;
+        text-decoration: none;
+        white-space: nowrap;
+        box-sizing: border-box;
+    }
+
+    /* Responsive layout */
+    @media (max-width: 850px) {
+        .inspector-search-form {
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            gap: 16px;
+        }
+
+        .inspector-search-actions {
+            grid-column: 1 / -1;
+        }
+    }
+
+    @media (max-width: 560px) {
+        .inspector-search-panel {
+            padding: 18px;
+        }
+
+        .inspector-search-form {
+            grid-template-columns: 1fr;
+            gap: 14px;
+        }
+
+        .inspector-search-actions {
+            grid-column: auto;
+            width: 100%;
+        }
+
+        .inspector-search-actions .btn {
+            flex: 1;
+        }
+    }
+
+    .inspector-results-summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+
+    .inspector-results-summary h2 {
+        margin: 0 0 5px;
+        color: #172b4d;
+        font-size: 1.05rem;
+    }
+
+    .inspector-results-summary p {
+        margin: 0;
+        color: #64748b;
+        font-size: 0.84rem;
+    }
+
+    .inspector-result-count {
+        display: inline-flex;
+        align-items: center;
+        padding: 7px 11px;
+        border: 1px solid #dbe5f0;
+        border-radius: 999px;
+        background: #f8fafc;
+        color: #475569;
+        font-size: 0.8rem;
+        font-weight: 700;
+    }
+
+    .inspector-rfi-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .inspector-rfi-table th,
+    .inspector-rfi-table td {
+        padding: 13px 14px;
+        text-align: left;
+        vertical-align: middle;
+    }
+
+    .inspector-rfi-table th {
+        background: #f8fafc;
+        color: #526987;
+        font-size: 0.72rem;
+        font-weight: 750;
+        letter-spacing: 0.035em;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    .inspector-rfi-table td {
+        border-bottom: 1px solid #edf1f6;
+        color: #334155;
+        font-size: 0.84rem;
+        line-height: 1.55;
+    }
+
+    .inspector-rfi-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .inspector-rfi-table tbody tr:hover {
+        background: #f8fbff;
+    }
+
+    .inspector-rfi-table .rfi-number {
+        min-width: 190px;
+        color: #172b4d;
+        font-weight: 750;
+        overflow-wrap: anywhere;
+    }
+
+    .inspector-rfi-table .rfi-period {
+        min-width: 165px;
+        white-space: nowrap;
+    }
+
+    .inspector-rfi-table .rfi-status-cell {
+        min-width: 125px;
+    }
+
+    .inspector-rfi-table .rfi-action-cell {
+        min-width: 120px;
+        text-align: center;
+    }
+
+    .inspector-rfi-table .rfi-action-cell .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 95px;
+        padding: 8px 12px;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .inspector-rfi-table .status {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 6px 10px;
+        border: 1px solid #dbe5f0;
+        border-radius: 999px;
+        background: #f1f5f9;
+        color: #475569;
+        font-size: 0.76rem;
+        font-weight: 750;
+        line-height: 1.4;
+    }
+
+    .inspector-rfi-table .status-assigned,
+    .inspector-rfi-table .status-scheduled,
+    .inspector-rfi-table .status-under-inspection {
+        border-color: #bfdbfe;
+        background: #eff6ff;
+        color: #1d4ed8;
+    }
+
+    .inspector-rfi-table .status-closed {
+        border-color: #bbf7d0;
+        background: #f0fdf4;
+        color: #166534;
+    }
+
+    .inspector-rfi-table .status-overdue,
+    .inspector-rfi-table .status-rejected {
+        border-color: #fecaca;
+        background: #fef2f2;
+        color: #b91c1c;
+    }
+
+    .inspector-rfi-empty {
+        padding: 35px 20px;
+        text-align: center;
+        color: #64748b;
+    }
+
+    .inspector-rfi-empty h3 {
+        margin: 0 0 8px;
+        color: #172b4d;
+        font-size: 1rem;
+    }
+
+    .inspector-rfi-empty p {
+        margin: 0 0 15px;
+        font-size: 0.88rem;
+        line-height: 1.6;
+    }
+
+    .inspector-rfi-empty .btn {
+        text-decoration: none;
+    }
+
+    
+    .inspector-search-field select {
+        display: block;
+        width: 100%;
+        min-height: 43px;
+        padding: 10px 13px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        background: #ffffff;
+        color: #172b4d;
+        font: inherit;
+        font-size: 0.9rem;
+        box-sizing: border-box;
+    }
+
+    .inspector-search-field select:focus {
+        border-color: #2563eb;
+        outline: 3px solid #dbeafe;
+    }
+
+    .inspector-search-form {
+        display: grid;
+        grid-template-columns: minmax(250px, 1fr) minmax(220px, 280px) auto;
+        align-items: end;
+        gap: 12px;
+    }
+
+    @media (max-width: 760px) {
+        .inspector-search-form {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 700px) {
+        .inspector-search-panel {
+            padding: 16px;
+        }
+
+        .inspector-search-field {
+            flex-basis: 100%;
+        }
+
+        .inspector-search-actions {
+            width: 100%;
+        }
+
+        .inspector-search-actions .btn {
+            flex: 1;
+        }
+
+        .inspector-rfi-table {
+            min-width: 850px;
+        }
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<div class="inspector-rfi-page">
+
+    <div class="page-header">
+        <div>
+            <h1>My Assigned RFIs</h1>
+            <p>
+                Find and open Requests for Inspection currently assigned to you.
+            </p>
+        </div>
+    </div>
+
+
+    {# Search #}
+
+    <section class="inspector-search-panel">
+
+        <h2>Find an Assigned RFI</h2>
+
+        <p>
+            Enter the last five digits of the contractor RFI number,
+            the full RFI number, or the internal reference.
+        </p>
+
+        <form
+            method="get"
+            action="{% url 'inspector_rfi_list' %}"
+            class="inspector-search-form"
+        >
+            <div class="inspector-search-field">
+                <label for="inspector-rfi-search">RFI Number</label>
+                <input
+                    type="search"
+                    id="inspector-rfi-search"
+                    name="q"
+                    value="{{ search_query }}"
+                    placeholder="e.g. 08256 or RFI-000029"
+                    autocomplete="off"
+                >
+            </div>
+
+            <div class="inspector-search-field">
+                <label for="inspector-result-filter">Inspection Result</label>
+                <select id="inspector-result-filter" name="result">
+                    <option value="">All Results</option>
+                    <option value="ACCEPTED" {% if result_filter == "ACCEPTED" %}selected{% endif %}>Accepted</option>
+                    <option value="PARTIALLY_ACCEPTED" {% if result_filter == "PARTIALLY_ACCEPTED" %}selected{% endif %}>Partially Accepted</option>
+                    <option value="ITEM_NOT_READY" {% if result_filter == "ITEM_NOT_READY" %}selected{% endif %}>Item Not Ready</option>
+                    <option value="ITEM_NOT_INSPECTABLE" {% if result_filter == "ITEM_NOT_INSPECTABLE" %}selected{% endif %}>Item Not Inspectable</option>
+                    <option value="INSPECTION_FAILED" {% if result_filter == "INSPECTION_FAILED" %}selected{% endif %}>Inspection Failed</option>
+                    <option value="TIME_CONSTRAINT" {% if result_filter == "TIME_CONSTRAINT" %}selected{% endif %}>Time Constraint</option>
+                    <option value="NCR" {% if result_filter == "NCR" %}selected{% endif %}>NCR</option>
+                </select>
+            </div>
+
+            <div class="inspector-search-actions">
+                <button type="submit" class="btn btn-primary">Search</button>
+
+                {% if search_query or result_filter %}
+                    <a href="{% url 'inspector_rfi_list' %}" class="btn">Clear</a>
+                {% endif %}
+            </div>
+        </form>
+    </section>
+
+
+    {# Assigned RFI results #}
+
+    <section class="card">
+
+        <div class="inspector-results-summary">
+            <div>
+                <h2>Assigned Requests</h2>
+
+                {% if search_query %}
+                    <p>
+                        Results matching
+                        <strong>{{ search_query }}</strong>
+                    </p>
+                {% else %}
+                    <p>
+                        RFIs currently assigned to your QC account.
+                    </p>
+                {% endif %}
+            </div>
+
+            <span class="inspector-result-count">
+                {{ rfi_count }} RFI{{ rfi_count|pluralize }}
+            </span>
+        </div>
+
+
+        <div class="table-wrapper">
+
+            <table class="inspector-rfi-table">
+
+                <thead>
+                    <tr>
+                        <th>RFI Number</th>
+                        <th>Internal Reference</th>
+                        <th>Contractor</th>
+                        <th>Inspection Planned Period</th>
+                        <th>Planned Time</th>
+                        <th>Status</th>
+                        <th class="rfi-action-cell">Action</th>
+                    </tr>
+                </thead>
+
+
+                <tbody>
+
+                    {% for rfi in rfis %}
+
+                        <tr>
+
+                            <td class="rfi-number">
+                                {{ rfi.rfi_number }}
+                            </td>
+
+                            <td>
+                                {{ rfi.internal_reference }}
+                            </td>
+
+                            <td>
+                                {{ rfi.contractor }}
+                            </td>
+
+                            <td class="rfi-period">
+                                {% if rfi.current_planned_start %}
+                                    {{ rfi.current_planned_start|date:"d M Y" }}
+                                {% else %}
+                                    —
+                                {% endif %}
+
+                                &nbsp;–&nbsp;
+
+                                {% if rfi.current_planned_end %}
+                                    {{ rfi.current_planned_end|date:"d M Y" }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+
+                            <td>
+                                {% if rfi.planned_time %}
+                                    {{ rfi.planned_time|time:"H:i" }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+
+                            <td class="rfi-status-cell">
+                                {% with status=rfi.status|lower %}
+                                    <span class="status
+                                        {% if status == 'assigned' %}status-assigned
+                                        {% elif status == 'scheduled' %}status-scheduled
+                                        {% elif status == 'under_inspection' %}status-under-inspection
+                                        {% elif status == 'closed' %}status-closed
+                                        {% elif status == 'overdue' %}status-overdue
+                                        {% elif status == 'rejected' %}status-rejected
+                                        {% endif %}">
+                                        {{ rfi.get_status_display }}
+                                    </span>
+                                {% endwith %}
+                            </td>
+
+                            <td class="rfi-action-cell">
+                                <a
+                                    href="{% url 'rfi_detail' rfi_id=rfi.id %}"
+                                    class="btn"
+                                >
+                                    Open RFI →
+                                </a>
+                            </td>
+
+                        </tr>
+
+                    {% empty %}
+
+                        <tr>
+                            <td colspan="7">
+                                <div class="inspector-rfi-empty">
+
+                                    {% if search_query %}
+                                        <h3>No matching assigned RFI</h3>
+
+                                        <p>
+                                            No RFI number or internal reference
+                                            matched your search among your
+                                            current assignments.
+                                        </p>
+
+                                        <a
+                                            href="{% url 'inspector_rfi_list' %}"
+                                            class="btn"
+                                        >
+                                            Show All My RFIs
+                                        </a>
+
+                                    {% else %}
+                                        <h3>No assigned RFIs</h3>
+
+                                        <p>
+                                            You currently have no RFIs assigned
+                                            to you for inspection.
+                                        </p>
+                                    {% endif %}
+
+                                </div>
+                            </td>
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </section>
+
+</div>
+
+{% endblock %}
+```

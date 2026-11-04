@@ -1,0 +1,136 @@
+{% extends "rfi_management/base.html" %}
+
+{% block title %}Start Inspection{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+
+    <div>
+        <h1>Start Inspection</h1>
+
+        <p>
+            Record the actual date and time the inspection begins.
+        </p>
+    </div>
+
+    <div>
+        <a
+            href="{% url 'rfi_detail' rfi_id=rfi.id %}"
+            class="btn"
+        >
+            Back to RFI
+        </a>
+    </div>
+
+</div>
+
+
+<div class="card">
+
+    <h2>Inspection Information</h2>
+
+    <div class="detail-grid">
+
+        <div>
+            <strong>RFI Number</strong>
+            <p>{{ rfi.rfi_number }}</p>
+        </div>
+
+        <div>
+            <strong>Internal Reference</strong>
+            <p>{{ rfi.internal_reference }}</p>
+        </div>
+
+        <div>
+            <strong>Contractor</strong>
+            <p>{{ rfi.contractor }}</p>
+        </div>
+
+        <div>
+            <strong>Inspection Planned Period</strong>
+            <p>
+                {{ rfi.current_planned_start|date:"d M Y" }}
+                –
+                {{ rfi.current_planned_end|date:"d M Y" }}
+            </p>
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="card">
+
+    <h2>Start Inspection</h2>
+
+    <p>
+        The inspection date must fall within the current
+        Inspection Planned Period.
+    </p>
+
+    <form method="post">
+
+        {% csrf_token %}
+
+        {% if form.non_field_errors %}
+            <div class="alert alert-error">
+                {{ form.non_field_errors }}
+            </div>
+        {% endif %}
+
+
+        <div class="form-group">
+
+            {{ form.inspection_date.label_tag }}
+
+            {{ form.inspection_date }}
+
+            {% if form.inspection_date.errors %}
+                <div class="form-error">
+                    {{ form.inspection_date.errors }}
+                </div>
+            {% endif %}
+
+        </div>
+
+
+        <div class="form-group">
+
+            {{ form.start_time.label_tag }}
+
+            {{ form.start_time }}
+
+            {% if form.start_time.errors %}
+                <div class="form-error">
+                    {{ form.start_time.errors }}
+                </div>
+            {% endif %}
+
+        </div>
+
+
+        <div class="form-actions">
+
+            <a
+                href="{% url 'rfi_detail' rfi_id=rfi.id %}"
+                class="btn"
+            >
+                Cancel
+            </a>
+
+            <button
+                type="submit"
+                class="btn btn-primary"
+            >
+                Start Inspection
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}

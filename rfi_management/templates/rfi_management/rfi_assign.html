@@ -1,0 +1,134 @@
+{% extends "rfi_management/base.html" %}
+
+{% block title %}Assign RFI {{ rfi.rfi_number }}{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+
+    <div>
+        <h1>Assign RFI</h1>
+
+        <p>
+            Assign RFI {{ rfi.rfi_number }} to a QC Inspector.
+        </p>
+    </div>
+
+    <a href="{% url 'rfi_detail' rfi_id=rfi.id %}" class="btn">
+        ← RFI Details
+    </a>
+
+</div>
+
+
+<div class="card">
+
+    <h2>RFI Information</h2>
+
+    <div class="detail-grid">
+
+        <div>
+            <strong>RFI Number</strong>
+            <span>{{ rfi.rfi_number }}</span>
+        </div>
+
+        <div>
+            <strong>Internal Reference</strong>
+            <span>{{ rfi.internal_reference }}</span>
+        </div>
+
+        <div>
+            <strong>Contractor</strong>
+            <span>{{ rfi.contractor }}</span>
+        </div>
+
+        <div>
+            <strong>Current Status</strong>
+            <span>{{ rfi.get_status_display }}</span>
+        </div>
+
+        <div>
+            <strong>Inspection Planned Period</strong>
+            <span>
+                {{ rfi.current_planned_start|date:"d M Y" }}
+                –
+                {{ rfi.current_planned_end|date:"d M Y" }}
+            </span>
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="card">
+
+    <h2>Assignment</h2>
+
+    <form method="post">
+
+        {% csrf_token %}
+
+        <div class="form-group">
+
+            <label for="{{ form.inspector.id_for_label }}">
+                QC Inspector
+            </label>
+
+            {{ form.inspector }}
+
+            {% for error in form.inspector.errors %}
+                <div class="field-error">
+                    {{ error }}
+                </div>
+            {% endfor %}
+
+        </div>
+
+
+        <div class="form-group">
+
+            <label for="{{ form.reason.id_for_label }}">
+                Assignment Note
+            </label>
+
+            {{ form.reason }}
+
+            {% for error in form.reason.errors %}
+                <div class="field-error">
+                    {{ error }}
+                </div>
+            {% endfor %}
+
+        </div>
+
+
+        {% if form.non_field_errors %}
+            <div class="field-error">
+                {% for error in form.non_field_errors %}
+                    {{ error }}
+                {% endfor %}
+            </div>
+        {% endif %}
+
+
+        <div class="form-actions">
+
+            <a
+                href="{% url 'rfi_detail' rfi_id=rfi.id %}"
+                class="btn"
+            >
+                Cancel
+            </a>
+
+            <button type="submit" class="btn btn-primary">
+                Assign RFI
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+{% endblock %}

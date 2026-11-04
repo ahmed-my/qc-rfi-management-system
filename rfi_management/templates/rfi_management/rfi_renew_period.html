@@ -1,0 +1,22 @@
+{% extends "rfi_management/base.html" %}
+
+{% block title %}Renew Inspection Period{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <h1>Renew Inspection Period</h1>
+    <p>RFI: <strong>{{ rfi.internal_reference }}</strong></p>
+    <p>
+        Current planned period:
+        {{ rfi.current_planned_start }} to {{ rfi.current_planned_end }}
+    </p>
+
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        <button type="submit" class="btn btn-primary">Renew Period</button>
+        <a href="{% url 'rfi_detail' rfi.id %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

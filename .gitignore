@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+.env
+.env.*
+!.env.example
+
+# Local database and user uploads
+db.sqlite3
+media/
+
+# Local OCR/test artifacts
+rfi_cells.zip
+ocr_coordinates.csv
+create_test_pdf.py
+test_*.py
+
+# Django/local runtime
+staticfiles/

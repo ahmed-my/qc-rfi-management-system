@@ -1,0 +1,1166 @@
+{% extends "rfi_management/base.html" %}
+
+{% block title %}RFI Details | {{ rfi.rfi_number }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .rfi-detail-page {
+        width: 100%;
+        max-width: 1440px;
+        margin: 0 auto;
+        color: #172b4d;
+    }
+
+    .rfi-detail-page,
+    .rfi-detail-page * {
+        box-sizing: border-box;
+    }
+
+    .rfi-detail-page .rfi-hero {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 22px;
+        margin-bottom: 24px;
+        padding: 26px 28px;
+        border: 1px solid #dbe5f0;
+        border-radius: 14px;
+        background: #ffffff;
+    }
+
+    .rfi-detail-page .rfi-hero-main {
+        flex: 1 1 320px;
+        min-width: 0;
+    }
+
+    .rfi-detail-page .rfi-eyebrow {
+        margin: 0 0 8px;
+        color: #64748b;
+        font-size: 0.75rem;
+        font-weight: 750;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+    }
+
+    .rfi-detail-page .rfi-hero h1 {
+        margin: 0 0 10px;
+        color: #172b4d;
+        font-size: clamp(1.4rem, 2.4vw, 1.9rem);
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+    }
+
+    .rfi-detail-page .rfi-subtitle {
+        margin: 0 0 14px;
+        color: #64748b;
+        font-size: 0.9rem;
+        line-height: 1.6;
+    }
+
+    .rfi-detail-page .rfi-hero-meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .rfi-detail-page .rfi-internal-ref {
+        color: #526987;
+        font-size: 0.82rem;
+        font-weight: 650;
+        overflow-wrap: anywhere;
+    }
+
+    .rfi-detail-page .rfi-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        width: fit-content;
+        max-width: 100%;
+        padding: 6px 10px;
+        border: 1px solid #bfdbfe;
+        border-radius: 999px;
+        background: #eff6ff;
+        color: #1d4ed8;
+        font-size: 0.78rem;
+        font-weight: 750;
+        line-height: 1.4;
+    }
+
+    .rfi-detail-page .rfi-status::before {
+        content: "";
+        flex: 0 0 7px;
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: currentColor;
+    }
+
+    .rfi-detail-page .rfi-status.status-closed {
+        border-color: #bbf7d0;
+        background: #f0fdf4;
+        color: #166534;
+    }
+
+    .rfi-detail-page .rfi-status.status-overdue,
+    .rfi-detail-page .rfi-status.status-rejected {
+        border-color: #fecaca;
+        background: #fef2f2;
+        color: #b91c1c;
+    }
+
+    .rfi-detail-page .rfi-status.status-awaiting-punch,
+    .rfi-detail-page .rfi-status.status-follow-up {
+        border-color: #fde68a;
+        background: #fefce8;
+        color: #a16207;
+    }
+
+    .rfi-detail-page .rfi-status.status-returned {
+        border-color: #fed7aa;
+        background: #fff7ed;
+        color: #9a3412;
+    }
+
+    .rfi-detail-page .rfi-status.status-received,
+    .rfi-detail-page .rfi-status.status-unassigned {
+        border-color: #e2e8f0;
+        background: #f1f5f9;
+        color: #475569;
+    }
+
+    .rfi-detail-page .rfi-hero-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 9px;
+        flex: 0 1 auto;
+        max-width: 100%;
+    }
+
+    .rfi-detail-page .rfi-hero-actions .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 38px;
+        padding: 9px 13px;
+        font-size: 0.83rem;
+        line-height: 1.35;
+        text-align: center;
+        text-decoration: none;
+        white-space: normal;
+    }
+
+    .rfi-detail-page .rfi-danger-button {
+        border: 1px solid #dc2626;
+        border-radius: 8px;
+        background: #dc2626;
+        color: #ffffff;
+    }
+
+    .rfi-detail-page .rfi-danger-button:hover {
+        background: #b91c1c;
+        border-color: #b91c1c;
+    }
+
+    .rfi-detail-page .rfi-section {
+        margin-bottom: 22px;
+        padding: 24px;
+        border: 1px solid #dbe5f0;
+        border-radius: 13px;
+        background: #ffffff;
+        min-width: 0;
+    }
+
+    .rfi-detail-page .rfi-section-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .rfi-detail-page .rfi-section-header h2 {
+        margin: 0 0 5px;
+        color: #172b4d;
+        font-size: 1.1rem;
+        font-weight: 750;
+    }
+
+    .rfi-detail-page .rfi-section-description {
+        margin: 0;
+        color: #64748b;
+        font-size: 0.85rem;
+        line-height: 1.6;
+    }
+
+    .rfi-detail-page .rfi-section-count {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 30px;
+        min-height: 28px;
+        padding: 4px 9px;
+        border-radius: 8px;
+        background: #edf4ff;
+        color: #2459a9;
+        font-size: 0.8rem;
+        font-weight: 750;
+    }
+
+    .rfi-detail-page .rfi-info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 13px;
+    }
+
+    .rfi-detail-page .rfi-info-item {
+        min-width: 0;
+        padding: 15px 16px;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        background: #fbfcfe;
+    }
+
+    .rfi-detail-page .rfi-info-label {
+        display: block;
+        margin-bottom: 7px;
+        color: #64748b;
+        font-size: 0.73rem;
+        font-weight: 750;
+        letter-spacing: 0.045em;
+        text-transform: uppercase;
+    }
+
+    .rfi-detail-page .rfi-info-value {
+        display: block;
+        color: #172b4d;
+        font-size: 0.9rem;
+        font-weight: 550;
+        line-height: 1.65;
+        overflow-wrap: anywhere;
+        word-break: normal;
+    }
+
+    .rfi-detail-page .rfi-info-value.is-emphasized {
+        font-weight: 750;
+    }
+
+    .rfi-detail-page .rfi-assignment-highlight {
+        margin-bottom: 18px;
+        padding: 18px;
+        border: 1px solid #bfdbfe;
+        border-radius: 11px;
+        background: #f5f9ff;
+    }
+
+    .rfi-detail-page .rfi-assignment-highlight h3 {
+        margin: 0 0 7px;
+        color: #1e40af;
+        font-size: 0.95rem;
+    }
+
+    .rfi-detail-page .rfi-assignment-highlight p {
+        margin: 0;
+        color: #526987;
+        font-size: 0.87rem;
+        line-height: 1.65;
+    }
+
+    .rfi-detail-page .rfi-empty-state {
+        padding: 22px;
+        border: 1px dashed #cbd5e1;
+        border-radius: 10px;
+        background: #f8fafc;
+        color: #64748b;
+        font-size: 0.88rem;
+        line-height: 1.7;
+        text-align: center;
+    }
+
+    .rfi-detail-page .rfi-table-wrapper {
+        width: 100%;
+        overflow-x: auto;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .rfi-detail-page .rfi-table {
+        width: 100%;
+        min-width: 760px;
+        border-collapse: separate;
+        border-spacing: 0;
+        text-align: left;
+    }
+
+    .rfi-detail-page .rfi-table th {
+        padding: 12px 14px;
+        border-bottom: 1px solid #dbe5f0;
+        background: #f8fafc;
+        color: #526987;
+        font-size: 0.72rem;
+        font-weight: 750;
+        letter-spacing: 0.035em;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    .rfi-detail-page .rfi-table td {
+        padding: 13px 14px;
+        border-bottom: 1px solid #edf1f6;
+        color: #334155;
+        font-size: 0.84rem;
+        line-height: 1.55;
+        vertical-align: middle;
+    }
+
+    .rfi-detail-page .rfi-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .rfi-detail-page .rfi-table tbody tr:hover {
+        background: #fbfcfe;
+    }
+
+    .rfi-detail-page .rfi-table .rfi-table-primary {
+        color: #172b4d;
+        font-weight: 750;
+    }
+
+    .rfi-detail-page .rfi-table .rfi-table-actions {
+        min-width: 150px;
+        white-space: nowrap;
+    }
+
+    .rfi-detail-page .rfi-table .rfi-table-actions .btn {
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        margin: 2px 4px 2px 0;
+        padding: 7px 10px;
+        font-size: 0.78rem;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .rfi-detail-page .rfi-history-status {
+        display: inline-flex;
+        align-items: center;
+        padding: 5px 8px;
+        border: 1px solid #e2e8f0;
+        border-radius: 999px;
+        background: #f8fafc;
+        color: #475569;
+        font-size: 0.75rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .rfi-detail-page .rfi-history-status.is-current {
+        border-color: #bbf7d0;
+        background: #f0fdf4;
+        color: #166534;
+    }
+
+    .rfi-detail-page .rfi-history-status.is-progress {
+        border-color: #bfdbfe;
+        background: #eff6ff;
+        color: #1d4ed8;
+    }
+
+    .rfi-detail-page .rfi-document-text {
+        color: #334155;
+        font-size: 0.9rem;
+        line-height: 1.8;
+        overflow-wrap: anywhere;
+    }
+
+    .rfi-detail-page .rfi-document-text p:last-child {
+        margin-bottom: 0;
+    }
+
+    .rfi-detail-page .rfi-bottom-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 4px 0 24px;
+    }
+
+    .rfi-detail-page .rfi-bottom-actions .btn {
+        text-decoration: none;
+    }
+
+    @media (max-width: 800px) {
+        .rfi-detail-page .rfi-hero {
+            padding: 22px;
+        }
+
+        .rfi-detail-page .rfi-hero-actions {
+            justify-content: flex-start;
+            width: 100%;
+        }
+
+        .rfi-detail-page .rfi-section {
+            padding: 19px;
+        }
+    }
+
+    @media (max-width: 560px) {
+        .rfi-detail-page .rfi-info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .rfi-detail-page .rfi-hero {
+            padding: 18px;
+        }
+
+        .rfi-detail-page .rfi-section {
+            padding: 15px;
+        }
+
+        .rfi-detail-page .rfi-hero-actions {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .rfi-detail-page .rfi-hero-actions .btn {
+            width: 100%;
+        }
+
+        .rfi-detail-page .rfi-section-header {
+            align-items: center;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .rfi-detail-page * {
+            scroll-behavior: auto;
+        }
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+
+<div class="rfi-detail-page">
+
+    <!-- =========================================================
+       1. PAGE HEADER AND ACTIONS
+       ========================================================= -->
+
+    <header class="rfi-hero">
+
+        <div class="rfi-hero-main">
+            <p class="rfi-eyebrow">QC RFI Management System</p>
+
+            <h1>{{ rfi.rfi_number }}</h1>
+
+            <p class="rfi-subtitle">
+                Request for Inspection details and workflow history
+            </p>
+
+            <div class="rfi-hero-meta">
+                <span class="rfi-internal-ref">
+                    Internal Reference: {{ rfi.internal_reference }}
+                </span>
+
+                {% with status=rfi.status|lower %}
+                    <span class="rfi-status
+                        {% if status == 'closed' %}status-closed
+                        {% elif status == 'overdue' %}status-overdue
+                        {% elif status == 'rejected' %}status-rejected
+                        {% elif status == 'awaiting_punch' %}status-awaiting-punch
+                        {% elif status == 'follow_up' %}status-follow-up
+                        {% elif status == 'returned' %}status-returned
+                        {% elif status == 'received' %}status-received
+                        {% elif status == 'unassigned' %}status-unassigned
+                        {% endif %}">
+                        {{ rfi.get_status_display }}
+                    </span>
+                {% endwith %}
+            </div>
+        </div>
+
+
+        <div class="rfi-hero-actions">
+
+            {% if request.user.profile.role == "ADMIN" %}
+                {% if rfi.status == "OVERDUE" %}
+                    <a href="{% url 'rfi_renew_period' rfi.id %}" class="btn btn-primary">
+                        Renew Inspection Period
+                    </a>
+
+                {% endif %}
+
+                {% if active_assignment %}
+                    <a
+                        href="{% url 'rfi_reassign' rfi_id=rfi.id %}"
+                        class="btn"
+                    >
+                        Reassign Inspector
+                    </a>
+                {% else %}
+                    <a
+                        href="{% url 'rfi_assign' rfi_id=rfi.id %}"
+                        class="btn btn-primary"
+                    >
+                        Assign Inspector
+                    </a>
+                {% endif %}
+
+                <a
+                    href="{% url 'rfi_delete' rfi_id=rfi.id %}"
+                    class="btn rfi-danger-button"
+                >
+                    Delete RFI
+                </a>
+
+            {% elif request.user.profile.role == "SUPERVISOR" %}
+
+                {% if not active_assignment %}
+                    <a
+                        href="{% url 'rfi_assign' rfi_id=rfi.id %}"
+                        class="btn btn-primary"
+                    >
+                        Assign RFI
+                    </a>
+                {% endif %}
+
+            {% endif %}
+
+            {% if request.user.profile.role == "INSPECTOR" %}
+                {% if active_inspection %}
+                    <a
+                        href="{% url 'inspection_detail' inspection_id=active_inspection.id %}"
+                        class="btn btn-primary"
+                    >
+                        Continue Inspection #{{ active_inspection.inspection_number }}
+                    </a>
+
+                {% elif rfi.status == "RECEIVED" or rfi.status == "ASSIGNED" or rfi.status == "SCHEDULED" %}
+                    {% if rfi.created_by_id == request.user.id or active_assignment and active_assignment.inspector_id == request.user.id %}
+                        <a
+                            href="{% url 'start_inspection' rfi_id=rfi.id %}"
+                            class="btn btn-primary"
+                        >
+                            Start Inspection
+                        </a>
+                    {% endif %}
+                {% endif %}
+
+                {% if rfi.status == "OVERDUE" %}
+                    <a href="{% url 'rfi_renew_period' rfi.id %}" class="btn btn-primary">
+                        Renew Inspection Period
+                    </a>
+
+                    <a href="{% url 'rfi_return_to_supervisor' rfi.id %}" class="btn btn-warning">
+                        Return to Supervisor
+                    </a>
+                {% endif %}
+
+            {% endif %}
+
+            <a href="{% url 'rfi_list' %}" class="btn">
+                ← RFI Register
+            </a>
+
+        </div>
+
+    </header>
+
+
+    <!-- =========================================================
+       2. IDENTIFICATION
+       ========================================================= -->
+
+    <section class="rfi-section">
+
+        <div class="rfi-section-header">
+            <div>
+                <h2>Identification</h2>
+                <p class="rfi-section-description">
+                    Core identification details for this request.
+                </p>
+            </div>
+        </div>
+
+        <div class="rfi-info-grid">
+
+            <div class="rfi-info-item">
+                <span class="rfi-info-label">Contractor RFI Number</span>
+                <span class="rfi-info-value is-emphasized">
+                    {{ rfi.rfi_number|default:"—" }}
+                </span>
+            </div>
+
+            <div class="rfi-info-item">
+                <span class="rfi-info-label">Internal Reference</span>
+                <span class="rfi-info-value is-emphasized">
+                    {{ rfi.internal_reference|default:"—" }}
+                </span>
+            </div>
+
+            <div class="rfi-info-item">
+                <span class="rfi-info-label">Revision</span>
+                <span class="rfi-info-value">
+                    {{ rfi.revision|default:"—" }}
+                </span>
+            </div>
+
+            <div class="rfi-info-item">
+                <span class="rfi-info-label">Certificate Code</span>
+                <span class="rfi-info-value">
+                    {{ rfi.certificate_code|default:"—" }}
+                </span>
+            </div>
+
+            <div class="rfi-info-item">
+                <span class="rfi-info-label">Client RFI Number</span>
+                <span class="rfi-info-value">
+                    {{ rfi.client_rfi_number|default:"—" }}
+                </span>
+            </div>
+
+            <div class="rfi-info-item">
+                <span class="rfi-info-label">Contractor</span>
+                <span class="rfi-info-value">
+                    {{ rfi.contractor|default:"—" }}
+                </span>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================================================
+       3. PLANNING
+       ========================================================= -->
+
+    <section class="rfi-section">
+
+        <div class="rfi-section-header">
+            <div>
+                <h2>Inspection Planning</h2>
+                <p class="rfi-section-description">
+                    Received date and original/current planned inspection periods.
+                </p>
+            </div>
+        </div>
+
+        <div class="rfi-info-grid">
+
+            <div class="rfi-info-item">
+                <span class="rfi-info-label">Date Received</span>
+                <span class="rfi-info-value">
+                    {% if rfi.date_received %}
+                        {{ rfi.date_received|date:"d M Y" }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </span>
+            </div>
+
+            <div class="rfi-info-item">
+                <span class="rfi-info-label">Planned Time</span>
+                <span class="rfi-info-value">
+                    {{ rfi.planned_time|default:"—" }}
+                </span>
+            </div>
+
+            <div class="rfi-info-item">
+                <span class="rfi-info-label">Original Planned Period</span>
+                <span class="rfi-info-value">
+                    {% if rfi.original_planned_start %}
+                        {{ rfi.original_planned_start|date:"d M Y" }}
+                    {% else %}
+                        —
+                    {% endif %}
+                    &nbsp;–&nbsp;
+                    {% if rfi.original_planned_end %}
+                        {{ rfi.original_planned_end|date:"d M Y" }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </span>
+            </div>
+
+            <div class="rfi-info-item">
+                <span class="rfi-info-label">Current Planned Period</span>
+                <span class="rfi-info-value">
+                    {% if rfi.current_planned_start %}
+                        {{ rfi.current_planned_start|date:"d M Y" }}
+                    {% else %}
+                        —
+                    {% endif %}
+                    &nbsp;–&nbsp;
+                    {% if rfi.current_planned_end %}
+                        {{ rfi.current_planned_end|date:"d M Y" }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </span>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================================================
+       4. CURRENT ASSIGNMENT
+       ========================================================= -->
+
+    <section class="rfi-section">
+
+        <div class="rfi-section-header">
+            <div>
+                <h2>QC Assignment</h2>
+                <p class="rfi-section-description">
+                    Current inspector responsible for this RFI.
+                </p>
+            </div>
+
+            {% if active_assignment %}
+                <span class="rfi-history-status is-current">
+                    Currently Assigned
+                </span>
+            {% else %}
+                <span class="rfi-history-status">
+                    Not Assigned
+                </span>
+            {% endif %}
+        </div>
+
+
+        {% if active_assignment %}
+
+            <div class="rfi-assignment-highlight">
+                <h3>
+                    {{ active_assignment.inspector.get_full_name|default:active_assignment.inspector.username }}
+                </h3>
+                <p>
+                    This is the currently assigned QC inspector for this RFI.
+                </p>
+            </div>
+
+            <div class="rfi-info-grid">
+
+                <div class="rfi-info-item">
+                    <span class="rfi-info-label">Assigned By</span>
+                    <span class="rfi-info-value">
+                        {{ active_assignment.assigned_by.get_full_name|default:active_assignment.assigned_by.username }}
+                    </span>
+                </div>
+
+                <div class="rfi-info-item">
+                    <span class="rfi-info-label">Assigned Date and Time</span>
+                    <span class="rfi-info-value">
+                        {{ active_assignment.assigned_at|date:"d M Y, H:i" }}
+                    </span>
+                </div>
+
+                <div class="rfi-info-item">
+                    <span class="rfi-info-label">Assignment Reason / Note</span>
+                    <span class="rfi-info-value">
+                        {{ active_assignment.reason|default:"No assignment note provided." }}
+                    </span>
+                </div>
+
+            </div>
+
+        {% else %}
+
+            <div class="rfi-empty-state">
+                This RFI does not currently have an assigned QC inspector.
+                {% if request.user.profile.role == "ADMIN" or request.user.profile.role == "SUPERVISOR" %}
+                    Use the Assign RFI action above to assign an inspector.
+                {% endif %}
+            </div>
+
+        {% endif %}
+
+    </section>
+
+
+    <!-- =========================================================
+       5. ASSIGNMENT HISTORY
+       ========================================================= -->
+
+    <section class="rfi-section">
+
+        <div class="rfi-section-header">
+            <div>
+                <h2>Assignment History</h2>
+                <p class="rfi-section-description">
+                    Previous and current assignments retained for traceability.
+                </p>
+            </div>
+
+            <span class="rfi-section-count">
+                {{ assignments|length }}
+            </span>
+        </div>
+
+
+        {% if assignments %}
+
+            <div class="rfi-table-wrapper">
+                <table class="rfi-table">
+
+                    <thead>
+                        <tr>
+                            <th>QC Inspector</th>
+                            <th>Assigned By</th>
+                            <th>Assigned At</th>
+                            <th>Unassigned At</th>
+                            <th>Reason / Note</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for assignment in assignments %}
+                            <tr>
+                                <td class="rfi-table-primary">
+                                    {{ assignment.inspector.get_full_name|default:assignment.inspector.username }}
+                                </td>
+
+                                <td>
+                                    {{ assignment.assigned_by.get_full_name|default:assignment.assigned_by.username }}
+                                </td>
+
+                                <td>
+                                    {{ assignment.assigned_at|date:"d M Y, H:i" }}
+                                </td>
+
+                                <td>
+                                    {% if assignment.unassigned_at %}
+                                        {{ assignment.unassigned_at|date:"d M Y, H:i" }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {{ assignment.reason|default:"—" }}
+                                </td>
+
+                                <td>
+                                    {% if assignment.unassigned_at %}
+                                        <span class="rfi-history-status">
+                                            Previous
+                                        </span>
+                                    {% else %}
+                                        <span class="rfi-history-status is-current">
+                                            Current
+                                        </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+
+                </table>
+            </div>
+
+        {% else %}
+
+            <div class="rfi-empty-state">
+                No assignment history is available for this RFI.
+            </div>
+
+        {% endif %}
+
+    </section>
+
+
+    <!-- =========================================================
+       6. INSPECTION HISTORY
+       ========================================================= -->
+
+    <section class="rfi-section">
+
+        <div class="rfi-section-header">
+            <div>
+                <h2>Inspection History</h2>
+                <p class="rfi-section-description">
+                    Inspection activity and results recorded against this RFI.
+                </p>
+            </div>
+
+            <span class="rfi-section-count">
+                {{ inspections|length }}
+            </span>
+        </div>
+
+
+        {% if inspections %}
+
+            <div class="rfi-table-wrapper">
+                <table class="rfi-table">
+
+                    <thead>
+                        <tr>
+                            <th>Inspection</th>
+                            <th>Date</th>
+                            <th>Inspector</th>
+                            <th>Result</th>
+                            <th>Punch List</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for inspection in inspections %}
+                            <tr>
+                                <td class="rfi-table-primary">
+                                    #{{ inspection.inspection_number }}
+                                </td>
+
+                                <td>
+                                    {% if inspection.inspection_date %}
+                                        {{ inspection.inspection_date|date:"d M Y" }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {{ inspection.inspector.get_full_name|default:inspection.inspector.username }}
+                                </td>
+
+                                <td>
+                                    {% if inspection.overall_result %}
+                                        {{ inspection.get_overall_result_display }}
+                                    {% else %}
+                                        <span class="rfi-history-status is-progress">
+                                            In Progress
+                                        </span>
+                                    {% endif %}
+                                </td>
+
+                                <td class="rfi-table-actions">
+                                    {% if inspection.overall_result == "PARTIALLY_ACCEPTED" and rfi.status == "AWAITING_PUNCH" %}
+
+                                        {% with existing_punch_list=inspection.punch_lists.all|first %}
+
+                                            {% if existing_punch_list %}
+
+                                                <a
+                                                    href="{% url 'punch_list_detail' punch_list_id=existing_punch_list.id %}"
+                                                    class="btn"
+                                                >
+                                                    Open Punch List
+                                                </a>
+
+                                            {% else %}
+
+                                                {% if request.user.profile.role == "ADMIN" or request.user.profile.role == "SUPERVISOR" or request.user.profile.role == "INSPECTOR" and inspection.inspector_id == request.user.id and active_assignment and active_assignment.inspector_id == request.user.id %}
+
+                                                    <a
+                                                        href="{% url 'punch_list_create' inspection_id=inspection.id %}"
+                                                        class="btn btn-primary"
+                                                    >
+                                                        Create Punch List
+                                                    </a>
+
+                                                {% else %}
+                                                    —
+                                                {% endif %}
+
+                                            {% endif %}
+
+                                        {% endwith %}
+
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+
+                </table>
+            </div>
+
+        {% else %}
+
+            <div class="rfi-empty-state">
+                No inspections have been recorded for this RFI.
+            </div>
+
+        {% endif %}
+
+    </section>
+
+
+    <!-- =========================================================
+       7. TECHNICAL INFORMATION
+       ========================================================= -->
+
+    <section class="rfi-section">
+
+        <div class="rfi-section-header">
+            <div>
+                <h2>Technical Information</h2>
+                <p class="rfi-section-description">
+                    Discipline, location, system and inspection activity details.
+                </p>
+            </div>
+        </div>
+
+        <div class="rfi-info-grid">
+
+            <div class="rfi-info-item">
+                <span class="rfi-info-label">Discipline</span>
+                <span class="rfi-info-value">
+                    {{ rfi.discipline|default:"—" }}
+                </span>
+            </div>
+
+            <div class="rfi-info-item">
+                <span class="rfi-info-label">Area</span>
+                <span class="rfi-info-value">
+                    {{ rfi.area|default:"—" }}
+                </span>
+            </div>
+
+            <div class="rfi-info-item">
+                <span class="rfi-info-label">Unit</span>
+                <span class="rfi-info-value">
+                    {{ rfi.unit|default:"—" }}
+                </span>
+            </div>
+
+            <div class="rfi-info-item">
+                <span class="rfi-info-label">System</span>
+                <span class="rfi-info-value">
+                    {{ rfi.system|default:"—" }}
+                </span>
+            </div>
+
+            <div class="rfi-info-item">
+                <span class="rfi-info-label">Subsystem</span>
+                <span class="rfi-info-value">
+                    {{ rfi.subsystem|default:"—" }}
+                </span>
+            </div>
+
+            <div class="rfi-info-item">
+                <span class="rfi-info-label">QC Code</span>
+                <span class="rfi-info-value">
+                    {{ rfi.qc_code|default:"—" }}
+                </span>
+            </div>
+
+            <div class="rfi-info-item">
+                <span class="rfi-info-label">ITP Document</span>
+                <span class="rfi-info-value">
+                    {{ rfi.itp_document|default:"—" }}
+                </span>
+            </div>
+
+            <div class="rfi-info-item">
+                <span class="rfi-info-label">Form Code</span>
+                <span class="rfi-info-value">
+                    {{ rfi.form_code|default:"—" }}
+                </span>
+            </div>
+
+            <div class="rfi-info-item">
+                <span class="rfi-info-label">IWP Code</span>
+                <span class="rfi-info-value">
+                    {{ rfi.iwp_code|default:"—" }}
+                </span>
+            </div>
+
+            <div class="rfi-info-item">
+                <span class="rfi-info-label">Inspection Activity</span>
+                <span class="rfi-info-value">
+                    {{ rfi.inspection_activity|default:"—" }}
+                </span>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =========================================================
+       8. REFERENCE DOCUMENTS
+       ========================================================= -->
+
+    <section class="rfi-section">
+
+        <div class="rfi-section-header">
+            <div>
+                <h2>Reference Documents</h2>
+                <p class="rfi-section-description">
+                    Reference documents and supporting technical information.
+                </p>
+            </div>
+        </div>
+
+        <div class="rfi-document-text">
+            {% if rfi.reference_documents %}
+                {{ rfi.reference_documents|linebreaks }}
+            {% else %}
+                <p>No reference documents have been recorded.</p>
+            {% endif %}
+        </div>
+
+    </section>
+
+
+    <!-- =========================================================
+       9. REGISTRATION INFORMATION
+       ========================================================= -->
+
+    <section class="rfi-section">
+
+        <div class="rfi-section-header">
+            <div>
+                <h2>Registration Information</h2>
+                <p class="rfi-section-description">
+                    Audit information for the original RFI registration.
+                </p>
+            </div>
+        </div>
+
+        <div class="rfi-info-grid">
+
+            <div class="rfi-info-item">
+                <span class="rfi-info-label">Registered By</span>
+                <span class="rfi-info-value">
+                    {{ rfi.created_by.get_full_name|default:rfi.created_by.username }}
+                </span>
+            </div>
+
+            <div class="rfi-info-item">
+                <span class="rfi-info-label">Registered At</span>
+                <span class="rfi-info-value">
+                    {{ rfi.created_at|date:"d M Y, H:i" }}
+                </span>
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <div class="rfi-bottom-actions">
+        <a href="{% url 'rfi_list' %}" class="btn">
+            ← Back to RFI Register
+        </a>
+    </div>
+
+</div>
+
+{% endblock %}
