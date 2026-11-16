@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.db.models import Q
+from qc_rfi_system.private_storage import PrivateMediaStorage
 
 
 # ============================================================
@@ -14,6 +15,7 @@ class UserProfile(models.Model):
         SUPERVISOR = "SUPERVISOR", "Supervisor"
         INSPECTOR = "INSPECTOR", "Inspector"
         ADMIN = "ADMIN", "Administrator"
+        CLIENT = "CLIENT", "Client"
 
     user = models.OneToOneField(
         User,
@@ -939,3 +941,39 @@ class RFIUpload(models.Model):
 
     def __str__(self):
         return f"Upload #{self.pk} - {self.get_status_display()}"
+
+
+
+# ============================================================
+# CLIENT SIGNED RFI RECORDS
+# ============================================================
+
+class ClientSignedRFI(models.Model):
+
+    client = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="signed_rfi_records",
+    )
+
+    rfi_number = models.CharField(
+        max_length=150,
+        db_index=True,
+    )
+
+    signed_copy = models.FileField(
+        upload_to="client_signed_rfis/%Y/%m/",
+        storage=PrivateMediaStorage(),
+        blank=True,
+        null=True,
+    )
+
+    recorded_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    class Meta:
+        ordering = ["-recorded_at"]
+
+    def __str__(self):
+        return f"{self.rfi_number} - {self.client.username}"

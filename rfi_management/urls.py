@@ -23,6 +23,10 @@ from .views import (
     punch_list_signed_upload_view,
     rfi_renew_period_view,
     rfi_return_to_supervisor_view,
+    change_own_password_view,
+    client_signed_rfi_list_view,
+    client_signed_rfi_create_view,
+    client_signed_rfi_file_view,
 )
 
 urlpatterns = [
@@ -153,5 +157,29 @@ urlpatterns = [
         "rfis/<int:rfi_id>/return-to-supervisor/",
         rfi_return_to_supervisor_view,
         name="rfi_return_to_supervisor",
+    ),
+
+    path(
+        "my-account/change-password/",
+        change_own_password_view,
+        name="change_own_password",
+    ),
+
+        path(
+        "client/signed-rfis/",
+        client_signed_rfi_list_view,
+        name="client_signed_rfi_list",
+    ),
+
+    path(
+        "client/signed-rfis/add/",
+        client_signed_rfi_create_view,
+        name="client_signed_rfi_create",
+    ),
+
+    path(
+        "client/signed-rfis/<int:pk>/file/",
+        client_signed_rfi_file_view,
+        name="client_signed_rfi_file",
     ),
 ]

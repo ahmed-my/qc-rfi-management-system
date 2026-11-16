@@ -1,14 +1,15 @@
 import os
 
 from django.contrib import messages
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import SetPasswordForm
+from django.contrib.auth.forms import SetPasswordForm, PasswordChangeForm
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.db import transaction, IntegrityError
 from django.db.models import Max, Q
+from django.http import FileResponse, Http404
 
 from .forms import (
     LoginForm,
@@ -22,6 +23,7 @@ from .forms import (
     PunchListCreateForm,
     RFIRenewalForm,
     ReturnToSupervisorForm,
+    ClientSignedRFIForm,
 )
 
 from .models import (
@@ -34,6 +36,7 @@ from .models import (
     RFIHistory,
     Document,
     RFIRenewal,
+    ClientSignedRFI,
 )
 
 def inspector_can_access_rfi(rfi, user):
@@ -156,6 +159,24 @@ def dashboard_view(request):
         context["inspector_count"] = UserProfile.objects.filter(
             role=UserProfile.Role.INSPECTOR
         ).count()
+
+    elif profile.role == UserProfile.Role.CLIENT:
+        signed_rfis = ClientSignedRFI.objects.filter(
+            client=request.user
+        )
+
+        current_time = timezone.now()
+
+        context["total_signed_rfis"] = signed_rfis.count()
+
+        context["signed_rfis_this_month"] = signed_rfis.filter(
+            recorded_at__year=current_time.year,
+            recorded_at__month=current_time.month,
+        ).count()
+
+        context["latest_signed_rfi"] = signed_rfis.order_by(
+            "-recorded_at"
+        ).first()
 
     return render(
         request,
@@ -423,6 +444,93 @@ def user_password_view(request, user_id):
         {
             "form": form,
             "user_obj": user,
+        },
+    )
+
+@login_required
+def client_signed_rfi_list_view(request):
+    """Display only signed RFI records belonging to the logged-in client."""
+
+    profile = getattr(request.user, "profile", None)
+
+    if profile is None or profile.role != UserProfile.Role.CLIENT:
+        messages.error(request, "You do not have permission to access this page.")
+        return redirect("dashboard")
+
+    records = ClientSignedRFI.objects.filter(
+        client=request.user
+    ).order_by("-recorded_at")
+
+    return render(
+        request,
+        "rfi_management/client_signed_rfi_list.html",
+        {
+            "records": records,
+        },
+    )
+
+
+@login_required
+def client_signed_rfi_file_view(request, pk):
+    """Allow a client to view only their own uploaded signed RFI."""
+
+    profile = getattr(request.user, "profile", None)
+
+    if profile is None or profile.role != UserProfile.Role.CLIENT:
+        raise Http404("File not found.")
+
+    record = get_object_or_404(
+        ClientSignedRFI,
+        pk=pk,
+        client=request.user,
+    )
+
+    if not record.signed_copy:
+        raise Http404("File not found.")
+
+    return FileResponse(
+        record.signed_copy.open("rb"),
+        as_attachment=False,
+        filename=record.signed_copy.name.split("/")[-1],
+    )
+
+
+@login_required
+def client_signed_rfi_create_view(request):
+    """Allow a client to record an RFI they have signed."""
+
+    profile = getattr(request.user, "profile", None)
+
+    if profile is None or profile.role != UserProfile.Role.CLIENT:
+        messages.error(request, "You do not have permission to access this page.")
+        return redirect("dashboard")
+
+    if request.method == "POST":
+        form = ClientSignedRFIForm(
+            request.POST,
+            request.FILES,
+        )
+
+        if form.is_valid():
+            record = form.save(commit=False)
+            record.client = request.user
+            record.save()
+
+            messages.success(
+                request,
+                "Your signed RFI has been recorded successfully.",
+            )
+
+            return redirect("client_signed_rfi_list")
+
+    else:
+        form = ClientSignedRFIForm()
+
+    return render(
+        request,
+        "rfi_management/client_signed_rfi_form.html",
+        {
+            "form": form,
         },
     )
 
@@ -2012,5 +2120,59 @@ def punch_item_create_view(request, punch_list_id):
         {
             "form": form,
             "punch_list": punch_list,
+        },
+    )
+
+
+@login_required
+def change_own_password_view(request):
+    """
+    Allow logged-in Inspectors and Clients to change their own passwords.
+    """
+
+    profile = getattr(request.user, "profile", None)
+
+    if profile is None:
+        messages.error(
+            request,
+            "Your account does not have a QC profile.",
+        )
+        return redirect("login")
+
+    if profile.role not in [
+        UserProfile.Role.INSPECTOR,
+        UserProfile.Role.CLIENT,
+    ]:
+        messages.error(
+            request,
+            "You do not have permission to use this page.",
+        )
+        return redirect("dashboard")
+
+    if request.method == "POST":
+        form = PasswordChangeForm(
+            user=request.user,
+            data=request.POST,
+        )
+
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)
+
+            messages.success(
+                request,
+                "Your password was changed successfully.",
+            )
+
+            return redirect("dashboard")
+
+    else:
+        form = PasswordChangeForm(user=request.user)
+
+    return render(
+        request,
+        "rfi_management/change_own_password.html",
+        {
+            "form": form,
         },
     )
