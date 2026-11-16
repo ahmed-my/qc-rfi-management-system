@@ -1054,12 +1054,16 @@
                     {% if request.user.profile.role == "ADMIN" or request.user.profile.role == "SUPERVISOR" %}
                         <a href="{% url 'rfi_list' %}" class="nav-link">RFI Register</a>
                         <a href="{% url 'rfi_create' %}" class="nav-link">Receive RFI</a>
+                        <a href="{% url 'admin:index' %}" class="nav-link">Admin</a>
                     {% elif request.user.profile.role == "INSPECTOR" %}
                         <a href="{% url 'inspector_rfi_list' %}" class="nav-link">My Assignments</a>
                     {% endif %}
 
                     {% if request.user.profile.role == "ADMIN" %}
                         <a href="{% url 'user_list' %}" class="nav-link">Users</a>
+                    {% endif %}
+                    {% if request.user.profile.role == "CLIENT"%}
+                        <a href="{% url 'change_own_password' %}" Class="nav-link">Change Password</a>
                     {% endif %}
                 </div>
 

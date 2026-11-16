@@ -3,8 +3,15 @@ from django.contrib.auth.forms import AuthenticationForm, SetPasswordForm
 from django.contrib.auth.models import User
 from django.utils import timezone
 
-from .models import RFI, UserProfile, Assignment, Inspection, PunchList, PunchItem
-
+from .models import (
+    RFI,
+    UserProfile,
+    Assignment,
+    Inspection,
+    PunchList,
+    PunchItem,
+    ClientSignedRFI,
+)
 
 class LoginForm(AuthenticationForm):
     """
@@ -104,6 +111,10 @@ class QCUserCreationForm(forms.Form):
             (
                 UserProfile.Role.INSPECTOR,
                 UserProfile.Role.INSPECTOR.label,
+            ),
+            (
+                UserProfile.Role.CLIENT,
+                UserProfile.Role.CLIENT.label,
             ),
         ],
         widget=forms.Select(
@@ -777,3 +788,33 @@ class PunchItemCreateForm(forms.ModelForm):
                 }
             ),
         }
+
+
+class ClientSignedRFIForm(forms.ModelForm):
+
+    class Meta:
+        model = ClientSignedRFI
+        fields = ["rfi_number", "signed_copy"]
+
+        widgets = {
+            "rfi_number": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Enter last five digits or full RFI number",
+                }
+            ),
+            "signed_copy": forms.ClearableFileInput(
+                attrs={
+                    "class": "form-control",
+                    "accept": ".pdf,.jpg,.jpeg,.png",
+                }
+            ),
+        }
+
+    def clean_rfi_number(self):
+        rfi_number = self.cleaned_data["rfi_number"].strip()
+
+        if not rfi_number:
+            raise forms.ValidationError("Please enter an RFI number.")
+
+        return rfi_number

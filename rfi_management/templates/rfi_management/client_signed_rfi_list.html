@@ -1,0 +1,78 @@
+{% extends "rfi_management/base.html" %}
+
+{% block content %}
+<div class="qc-dashboard">
+
+    <div class="qc-page-header">
+        <div>
+            <h2>My Signed RFIs</h2>
+            <p>View and retrieve your records of signed RFIs.</p>
+        </div>
+
+        <a href="{% url 'client_signed_rfi_create' %}"
+           class="btn btn-primary">
+            + Record Signed RFI
+        </a>
+    </div>
+
+    <div class="qc-card">
+
+        <h3>Recorded RFIs</h3>
+
+        {% if records %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>S/N</th>
+                            <th>RFI Number</th>
+                            <th>Date Recorded</th>
+                            <th>Signed Copy</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for record in records %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+
+                                <td>
+                                    <strong>{{ record.rfi_number }}</strong>
+                                </td>
+
+                                <td>
+                                    {{ record.recorded_at|date:"d M Y, h:i A" }}
+                                </td>
+
+                                <td>
+                                    {% if record.signed_copy %}
+                                        <a href="{% url 'client_signed_rfi_file' record.pk %}"
+                                            target="_blank"
+                                            rel="noopener noreferrer">
+                                                View Signed Copy
+                                        </a>
+                                    {% else %}
+                                        <span class="text-muted">
+                                            No attachment
+                                        </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        {% else %}
+            <div style="padding: 30px 15px; text-align: center;">
+                <h4>No Signed RFI Records Yet</h4>
+                <p>
+                    You have not recorded any signed RFIs.
+                    Use the button above to add your first record.
+                </p>
+            </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
