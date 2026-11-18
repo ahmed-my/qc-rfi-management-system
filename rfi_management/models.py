@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.db.models import Q
 from qc_rfi_system.private_storage import PrivateMediaStorage
+from django.db.models.functions import Lower
 
 
 # ============================================================
@@ -96,6 +97,14 @@ class RFI(models.Model):
     rfi_number = models.CharField(
         max_length=100
     )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                Lower("rfi_number"),
+                name="unique_rfi_number_case_insensitive",
+            ),
+        ]
 
     revision = models.CharField(
         max_length=20,

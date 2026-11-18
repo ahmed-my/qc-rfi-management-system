@@ -166,8 +166,8 @@
     }
 
     .rfi-detail-page .rfi-section {
-        margin-bottom: 22px;
-        padding: 24px;
+        margin-bottom: 18px;
+        padding: 22px;
         border: 1px solid #dbe5f0;
         border-radius: 13px;
         background: #ffffff;
@@ -215,6 +215,10 @@
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 13px;
+    }
+
+    .rfi-detail-page .rfi-planning-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     .rfi-detail-page .rfi-info-item {
@@ -373,10 +377,23 @@
     }
 
     .rfi-detail-page .rfi-document-text {
-        color: #334155;
-        font-size: 0.9rem;
+        padding: 18px 20px;
+        border: 1px solid #dbeafe;
+        border-left: 4px solid #2563eb;
+        border-radius: 10px;
+        background: #f5f9ff;
+        color: #1e3a5f;
+        font-size: 0.95rem;
         line-height: 1.8;
         overflow-wrap: anywhere;
+    }
+
+    .rfi-detail-page .rfi-document-text p {
+        margin: 0 0 8px;
+    }
+
+    .rfi-detail-page .rfi-document-text p:last-child {
+        margin-bottom: 0;
     }
 
     .rfi-detail-page .rfi-document-text p:last-child {
@@ -409,10 +426,15 @@
         .rfi-detail-page .rfi-section {
             padding: 19px;
         }
+
+        .rfi-detail-page .rfi-planning-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
     }
 
     @media (max-width: 560px) {
-        .rfi-detail-page .rfi-info-grid {
+        .rfi-detail-page .rfi-info-grid,
+        .rfi-detail-page .rfi-planning-grid {
             grid-template-columns: 1fr;
         }
 
@@ -468,7 +490,11 @@
 
             <div class="rfi-hero-meta">
                 <span class="rfi-internal-ref">
-                    Internal Reference: {{ rfi.internal_reference }}
+                    Ref: {{ rfi.internal_reference }}
+                </span>
+
+                <span class="rfi-internal-ref">
+                    Contractor: {{ rfi.contractor|default:"—" }}
                 </span>
 
                 {% with status=rfi.status|lower %}
@@ -575,73 +601,8 @@
 
     </header>
 
-
-    <!-- =========================================================
-       2. IDENTIFICATION
-       ========================================================= -->
-
-    <section class="rfi-section">
-
-        <div class="rfi-section-header">
-            <div>
-                <h2>Identification</h2>
-                <p class="rfi-section-description">
-                    Core identification details for this request.
-                </p>
-            </div>
-        </div>
-
-        <div class="rfi-info-grid">
-
-            <div class="rfi-info-item">
-                <span class="rfi-info-label">Contractor RFI Number</span>
-                <span class="rfi-info-value is-emphasized">
-                    {{ rfi.rfi_number|default:"—" }}
-                </span>
-            </div>
-
-            <div class="rfi-info-item">
-                <span class="rfi-info-label">Internal Reference</span>
-                <span class="rfi-info-value is-emphasized">
-                    {{ rfi.internal_reference|default:"—" }}
-                </span>
-            </div>
-
-            <div class="rfi-info-item">
-                <span class="rfi-info-label">Revision</span>
-                <span class="rfi-info-value">
-                    {{ rfi.revision|default:"—" }}
-                </span>
-            </div>
-
-            <div class="rfi-info-item">
-                <span class="rfi-info-label">Certificate Code</span>
-                <span class="rfi-info-value">
-                    {{ rfi.certificate_code|default:"—" }}
-                </span>
-            </div>
-
-            <div class="rfi-info-item">
-                <span class="rfi-info-label">Client RFI Number</span>
-                <span class="rfi-info-value">
-                    {{ rfi.client_rfi_number|default:"—" }}
-                </span>
-            </div>
-
-            <div class="rfi-info-item">
-                <span class="rfi-info-label">Contractor</span>
-                <span class="rfi-info-value">
-                    {{ rfi.contractor|default:"—" }}
-                </span>
-            </div>
-
-        </div>
-
-    </section>
-
-
-    <!-- =========================================================
-       3. PLANNING
+<!-- =========================================================
+       2. INSPECTION PLANNING
        ========================================================= -->
 
     <section class="rfi-section">
@@ -655,7 +616,7 @@
             </div>
         </div>
 
-        <div class="rfi-info-grid">
+        <div class="rfi-info-grid rfi-planning-grid">
 
             <div class="rfi-info-item">
                 <span class="rfi-info-label">Date Received</span>
@@ -665,13 +626,6 @@
                     {% else %}
                         —
                     {% endif %}
-                </span>
-            </div>
-
-            <div class="rfi-info-item">
-                <span class="rfi-info-label">Planned Time</span>
-                <span class="rfi-info-value">
-                    {{ rfi.planned_time|default:"—" }}
                 </span>
             </div>
 
@@ -709,6 +663,32 @@
                 </span>
             </div>
 
+        </div>
+
+    </section>
+
+
+    <!-- =========================================================
+        3. INSPECTION ACTIVITY
+        ========================================================= -->
+
+    <section class="rfi-section">
+
+        <div class="rfi-section-header">
+            <div>
+                <h2>Inspection Activity</h2>
+                <p class="rfi-section-description">
+                    Description of the inspection activity requested in this RFI.
+                </p>
+            </div>
+        </div>
+
+        <div class="rfi-document-text">
+            {% if rfi.inspection_activity %}
+                {{ rfi.inspection_activity|linebreaks }}
+            {% else %}
+                <p>No inspection activity has been recorded.</p>
+            {% endif %}
         </div>
 
     </section>
@@ -1002,125 +982,7 @@
 
 
     <!-- =========================================================
-       7. TECHNICAL INFORMATION
-       ========================================================= -->
-
-    <section class="rfi-section">
-
-        <div class="rfi-section-header">
-            <div>
-                <h2>Technical Information</h2>
-                <p class="rfi-section-description">
-                    Discipline, location, system and inspection activity details.
-                </p>
-            </div>
-        </div>
-
-        <div class="rfi-info-grid">
-
-            <div class="rfi-info-item">
-                <span class="rfi-info-label">Discipline</span>
-                <span class="rfi-info-value">
-                    {{ rfi.discipline|default:"—" }}
-                </span>
-            </div>
-
-            <div class="rfi-info-item">
-                <span class="rfi-info-label">Area</span>
-                <span class="rfi-info-value">
-                    {{ rfi.area|default:"—" }}
-                </span>
-            </div>
-
-            <div class="rfi-info-item">
-                <span class="rfi-info-label">Unit</span>
-                <span class="rfi-info-value">
-                    {{ rfi.unit|default:"—" }}
-                </span>
-            </div>
-
-            <div class="rfi-info-item">
-                <span class="rfi-info-label">System</span>
-                <span class="rfi-info-value">
-                    {{ rfi.system|default:"—" }}
-                </span>
-            </div>
-
-            <div class="rfi-info-item">
-                <span class="rfi-info-label">Subsystem</span>
-                <span class="rfi-info-value">
-                    {{ rfi.subsystem|default:"—" }}
-                </span>
-            </div>
-
-            <div class="rfi-info-item">
-                <span class="rfi-info-label">QC Code</span>
-                <span class="rfi-info-value">
-                    {{ rfi.qc_code|default:"—" }}
-                </span>
-            </div>
-
-            <div class="rfi-info-item">
-                <span class="rfi-info-label">ITP Document</span>
-                <span class="rfi-info-value">
-                    {{ rfi.itp_document|default:"—" }}
-                </span>
-            </div>
-
-            <div class="rfi-info-item">
-                <span class="rfi-info-label">Form Code</span>
-                <span class="rfi-info-value">
-                    {{ rfi.form_code|default:"—" }}
-                </span>
-            </div>
-
-            <div class="rfi-info-item">
-                <span class="rfi-info-label">IWP Code</span>
-                <span class="rfi-info-value">
-                    {{ rfi.iwp_code|default:"—" }}
-                </span>
-            </div>
-
-            <div class="rfi-info-item">
-                <span class="rfi-info-label">Inspection Activity</span>
-                <span class="rfi-info-value">
-                    {{ rfi.inspection_activity|default:"—" }}
-                </span>
-            </div>
-
-        </div>
-
-    </section>
-
-
-    <!-- =========================================================
-       8. REFERENCE DOCUMENTS
-       ========================================================= -->
-
-    <section class="rfi-section">
-
-        <div class="rfi-section-header">
-            <div>
-                <h2>Reference Documents</h2>
-                <p class="rfi-section-description">
-                    Reference documents and supporting technical information.
-                </p>
-            </div>
-        </div>
-
-        <div class="rfi-document-text">
-            {% if rfi.reference_documents %}
-                {{ rfi.reference_documents|linebreaks }}
-            {% else %}
-                <p>No reference documents have been recorded.</p>
-            {% endif %}
-        </div>
-
-    </section>
-
-
-    <!-- =========================================================
-       9. REGISTRATION INFORMATION
+       7. REGISTRATION INFORMATION
        ========================================================= -->
 
     <section class="rfi-section">

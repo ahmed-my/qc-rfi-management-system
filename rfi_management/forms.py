@@ -273,9 +273,12 @@ class QCSetPasswordForm(SetPasswordForm):
         ),
     )
 
+
+
 class RFIRegistrationForm(forms.ModelForm):
     """
-    Form used by QC supervisors to register a newly received RFI.
+    Simplified form used by QC supervisors to register a newly
+    received RFI.
     """
 
     class Meta:
@@ -283,60 +286,25 @@ class RFIRegistrationForm(forms.ModelForm):
 
         fields = [
             "rfi_number",
-            "revision",
-            "certificate_code",
-            "client_rfi_number",
-            "contractor",
+            "inspection_activity",
             "date_received",
             "original_planned_start",
             "original_planned_end",
-            "planned_time",
-            "discipline",
-            "area",
-            "unit",
-            "system",
-            "subsystem",
-            "qc_code",
-            "itp_document",
-            "form_code",
-            "iwp_code",
-            "inspection_activity",
-            "reference_documents",
         ]
 
         widgets = {
             "rfi_number": forms.TextInput(
                 attrs={
                     "class": "form-control",
-                    "placeholder": "RFI number",
+                    "placeholder": "Enter RFI number",
                 }
             ),
 
-            "revision": forms.TextInput(
+            "inspection_activity": forms.Textarea(
                 attrs={
                     "class": "form-control",
-                    "placeholder": "Revision",
-                }
-            ),
-
-            "certificate_code": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "placeholder": "Certificate code",
-                }
-            ),
-
-            "client_rfi_number": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "placeholder": "Client RFI number",
-                }
-            ),
-
-            "contractor": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "placeholder": "Contractor",
+                    "placeholder": "Describe the inspection activity",
+                    "rows": 3,
                 }
             ),
 
@@ -360,127 +328,13 @@ class RFIRegistrationForm(forms.ModelForm):
                     "type": "date",
                 }
             ),
-
-            "planned_time": forms.TimeInput(
-                attrs={
-                    "class": "form-control",
-                    "type": "time",
-                }
-            ),
-
-            "discipline": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "placeholder": "Discipline",
-                }
-            ),
-
-            "area": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "placeholder": "Area",
-                }
-            ),
-
-            "unit": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "placeholder": "Unit",
-                }
-            ),
-
-            "system": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "placeholder": "System",
-                }
-            ),
-
-            "subsystem": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "placeholder": "Subsystem",
-                }
-            ),
-
-            "qc_code": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "placeholder": "QC code",
-                }
-            ),
-
-            "itp_document": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "placeholder": "ITP document",
-                }
-            ),
-
-            "form_code": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "placeholder": "Form code",
-                }
-            ),
-
-            "iwp_code": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "placeholder": "IWP code",
-                }
-            ),
-
-            "inspection_activity": forms.TextInput(
-                attrs={
-                    "class": "form-control",
-                    "placeholder": "Inspection activity",
-                }
-            ),
-
-            "reference_documents": forms.Textarea(
-                attrs={
-                    "class": "form-control",
-                    "placeholder": "Reference documents",
-                    "rows": 4,
-                }
-            ),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # Daewoo is the current project contractor.
-        self.fields["contractor"].initial = "Daewoo"
-
-        # These are the dates that should normally be provided
-        # during RFI registration.
-        self.fields["date_received"].required = True
-
-        self.fields["original_planned_start"].required = True
-        self.fields["original_planned_end"].required = True
-
-        # Optional technical/reference fields.
-        optional_fields = [
-            "revision",
-            "certificate_code",
-            "client_rfi_number",
-            "planned_time",
-            "discipline",
-            "area",
-            "unit",
-            "system",
-            "subsystem",
-            "qc_code",
-            "itp_document",
-            "form_code",
-            "iwp_code",
-            "inspection_activity",
-            "reference_documents",
-        ]
-
-        for field_name in optional_fields:
-            self.fields[field_name].required = False
+        for field_name in self.fields:
+            self.fields[field_name].required = True
 
     def clean(self):
         cleaned_data = super().clean()
@@ -496,6 +350,19 @@ class RFIRegistrationForm(forms.ModelForm):
                 )
 
         return cleaned_data
+
+    def clean_rfi_number(self):
+        rfi_number = self.cleaned_data.get("rfi_number", "").strip()
+
+        if RFI.objects.filter(
+            rfi_number__iexact=rfi_number
+        ).exists():
+            raise forms.ValidationError(
+                "An RFI with this number has already been registered."
+            )
+
+        return rfi_number
+
 
 class RFIAssignmentForm(forms.ModelForm):
     class Meta:
