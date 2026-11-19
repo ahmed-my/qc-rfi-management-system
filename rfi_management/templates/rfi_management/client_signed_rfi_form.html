@@ -1,64 +1,266 @@
- {% extends "rfi_management/base.html" %}
+{% extends "rfi_management/base.html" %}
+
+{% block title %}Record a Signed RFI{% endblock %}
+
+{% block extra_css %}
+<style>
+    .signed-rfi-page {
+        width: 100%;
+        max-width: 900px;
+        margin: 0 auto;
+        color: #172b4d;
+    }
+
+    .signed-rfi-page,
+    .signed-rfi-page * {
+        box-sizing: border-box;
+    }
+
+    .signed-rfi-header {
+        margin-bottom: 22px;
+    }
+
+    .signed-rfi-eyebrow {
+        margin: 0 0 7px;
+        color: #64748b;
+        font-size: 0.73rem;
+        font-weight: 750;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+    }
+
+    .signed-rfi-header h1 {
+        margin: 0 0 8px;
+        color: #172b4d;
+        font-size: clamp(1.45rem, 2.5vw, 1.9rem);
+        line-height: 1.3;
+    }
+
+    .signed-rfi-header p {
+        margin: 0;
+        color: #64748b;
+        font-size: 0.9rem;
+        line-height: 1.65;
+    }
+
+    .signed-rfi-card {
+        padding: 28px;
+        border: 1px solid #dbe5f0;
+        border-radius: 14px;
+        background: #ffffff;
+        box-shadow: 0 5px 18px rgba(23, 43, 77, 0.045);
+    }
+
+    .signed-rfi-card-heading {
+        margin-bottom: 23px;
+        padding-bottom: 17px;
+        border-bottom: 1px solid #edf1f6;
+    }
+
+    .signed-rfi-card-heading h2 {
+        margin: 0 0 6px;
+        color: #172b4d;
+        font-size: 1.08rem;
+        font-weight: 750;
+    }
+
+    .signed-rfi-card-heading p {
+        margin: 0;
+        color: #64748b;
+        font-size: 0.86rem;
+        line-height: 1.65;
+    }
+
+    .signed-rfi-field {
+        margin-bottom: 23px;
+    }
+
+    .signed-rfi-field label {
+        display: block;
+        margin-bottom: 8px;
+        color: #263b59;
+        font-size: 0.86rem;
+        font-weight: 700;
+    }
+
+    .signed-rfi-field input[type="text"],
+    .signed-rfi-field input[type="file"] {
+        display: block;
+        width: 100%;
+        min-height: 46px;
+        padding: 11px 13px;
+        border: 1px solid #cbd8e8;
+        border-radius: 8px;
+        background: #ffffff;
+        color: #172b4d;
+        font: inherit;
+        font-size: 0.9rem;
+    }
+
+    .signed-rfi-field input[type="text"]:focus,
+    .signed-rfi-field input[type="file"]:focus {
+        outline: 3px solid rgba(37, 99, 235, 0.13);
+        border-color: #2563eb;
+    }
+
+    .signed-rfi-help {
+        display: block;
+        margin-top: 7px;
+        color: #64748b;
+        font-size: 0.78rem;
+        line-height: 1.55;
+    }
+
+    .signed-rfi-upload-panel {
+        padding: 18px;
+        border: 1px dashed #9bb4d2;
+        border-radius: 10px;
+        background: #f8fbff;
+    }
+
+    .signed-rfi-upload-title {
+        margin: 0 0 5px;
+        color: #263b59;
+        font-size: 0.88rem;
+        font-weight: 700;
+    }
+
+    .signed-rfi-upload-description {
+        margin: 0 0 13px;
+        color: #64748b;
+        font-size: 0.8rem;
+        line-height: 1.55;
+    }
+
+    .signed-rfi-error {
+        display: block;
+        margin-top: 7px;
+        color: #b91c1c;
+        font-size: 0.8rem;
+        line-height: 1.5;
+    }
+
+    .signed-rfi-alert {
+        margin-bottom: 20px;
+        padding: 12px 14px;
+        border: 1px solid #fecaca;
+        border-radius: 8px;
+        background: #fef2f2;
+        color: #991b1b;
+        font-size: 0.86rem;
+    }
+
+    .signed-rfi-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 28px;
+        padding-top: 19px;
+        border-top: 1px solid #edf1f6;
+    }
+
+    .signed-rfi-actions .btn {
+        display: inline-flex;
+        min-height: 42px;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 17px;
+        border-radius: 8px;
+        font-size: 0.86rem;
+        font-weight: 650;
+        text-decoration: none;
+    }
+
+    @media (max-width: 600px) {
+        .signed-rfi-card {
+            padding: 19px;
+        }
+
+        .signed-rfi-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .signed-rfi-actions .btn {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="qc-dashboard">
-    <div class="qc-page-header">
-        <div>
-            <h2>Record a Signed RFI</h2>
-            <p>Keep a digital record the signed RFI.</p>
-        </div>
-    </div>
+<div class="qc-dashboard signed-rfi-page">
 
-    <div class="qc-card" style="max-width: 750px;">
-        <h3>RFI Details</h3>
-        <p>
-            Enter the last five digits of the RFI number or its full reference.
-            You may also upload a scanned copy or photograph of the signed RFI.
-        </p>
+    <header class="signed-rfi-header">
+        <p class="signed-rfi-eyebrow">Client Portal · QC RFI Management</p>
+        <h1>Record a Signed RFI</h1>
+        <p>Securely record a signed Request for Inspection and retain its digital copy.</p>
+    </header>
+
+    <section class="signed-rfi-card">
+
+        <div class="signed-rfi-card-heading">
+            <h2>RFI details</h2>
+            <p>
+                Enter the last five digits of the RFI number or its full reference.
+                You may also attach a scanned copy or photograph of the signed RFI.
+            </p>
+        </div>
 
         <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
 
             {% if form.non_field_errors %}
-                <div class="alert alert-danger">
+                <div class="signed-rfi-alert" role="alert">
                     {{ form.non_field_errors }}
                 </div>
             {% endif %}
 
-            <div class="form-group">
+            <div class="signed-rfi-field">
                 <label for="{{ form.rfi_number.id_for_label }}">
-                    RFI Number
+                    RFI Number <span aria-hidden="true">*</span>
                 </label>
                 {{ form.rfi_number }}
-                {% for error in form.rfi_number.errors %}
-                    <small class="text-danger">{{ error }}</small>
-                {% endfor %}
-            </div>
-
-            <div class="form-group">
-                <label for="{{ form.signed_copy.id_for_label }}">
-                    Signed RFI Copy (Optional)
-                </label>
-                {{ form.signed_copy }}
-                <small class="form-text text-muted">
-                    Accepted formats: PDF, JPG, JPEG and PNG.
+                <small class="signed-rfi-help">
+                    Enter the last five digits or the complete RFI reference.
                 </small>
-                {% for error in form.signed_copy.errors %}
-                    <small class="text-danger">{{ error }}</small>
+                {% for error in form.rfi_number.errors %}
+                    <small class="signed-rfi-error">{{ error }}</small>
                 {% endfor %}
             </div>
 
-            <div style="display: flex; gap: 10px; margin-top: 25px;">
+            <div class="signed-rfi-field">
+                <label for="{{ form.signed_copy.id_for_label }}">
+                    Signed RFI copy <span style="font-weight: 400;">(Optional)</span>
+                </label>
+
+                <div class="signed-rfi-upload-panel">
+                    <p class="signed-rfi-upload-title">Attach the signed document</p>
+                    <p class="signed-rfi-upload-description">
+                        Select a scanned document or a clear photograph. The attachment is optional.
+                    </p>
+                    {{ form.signed_copy }}
+                    <small class="signed-rfi-help">
+                        Accepted formats: PDF, JPG, JPEG and PNG.
+                    </small>
+                </div>
+
+                {% for error in form.signed_copy.errors %}
+                    <small class="signed-rfi-error">{{ error }}</small>
+                {% endfor %}
+            </div>
+
+            <div class="signed-rfi-actions">
                 <button type="submit" class="btn btn-primary">
                     Save Record
                 </button>
 
-                <a href="{% url 'dashboard' %}"
-                   class="btn btn-secondary">
+                <a href="{% url 'dashboard' %}" class="btn btn-secondary">
                     Cancel
                 </a>
             </div>
         </form>
-    </div>
+
+    </section>
 </div>
 {% endblock %}
