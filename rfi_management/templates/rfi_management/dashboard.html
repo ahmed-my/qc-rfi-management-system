@@ -146,7 +146,7 @@
 
 .qc-dashboard .qc-stats-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
     gap: 18px;
 }
 
@@ -202,6 +202,76 @@
     color: #8290a4;
     font-size: .81rem;
     line-height: 1.5;
+}
+
+/* Inspector recent RFI activity */
+.qc-dashboard .qc-recent-panel {
+    overflow: hidden;
+    border: 1px solid #e1e8f0;
+    border-radius: 15px;
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(23,43,77,.035);
+}
+
+.qc-dashboard .qc-recent-table-wrap {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.qc-dashboard .qc-recent-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.qc-dashboard .qc-recent-table th,
+.qc-dashboard .qc-recent-table td {
+    padding: 15px 19px;
+    border-bottom: 1px solid #edf1f6;
+    font-size: .84rem;
+    white-space: nowrap;
+}
+
+.qc-dashboard .qc-recent-table th {
+    background: #f8fafc;
+    color: #64748b;
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.qc-dashboard .qc-recent-table td {
+    color: #405875;
+}
+
+.qc-dashboard .qc-recent-table tr:last-child td {
+    border-bottom: 0;
+}
+
+.qc-dashboard .qc-status-pill {
+    display: inline-block;
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: #edf4ff;
+    color: #2459a9;
+    font-size: .72rem;
+    font-weight: 800;
+}
+
+.qc-dashboard .qc-empty-state {
+    padding: 25px 20px;
+    color: #718096;
+    font-size: .88rem;
+    text-align: center;
+}
+
+.qc-dashboard .qc-recent-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 13px 19px;
+    border-top: 1px solid #edf1f6;
+    background: #fbfcfe;
 }
 
 /* Action cards */
@@ -399,500 +469,757 @@
         transform: none;
     }
 }
+
+/* Dashboard sidebar layout */
+
+.qc-dashboard-layout {
+    display: grid;
+    grid-template-columns: 250px minmax(0, 1fr);
+    min-height: 100vh;
+    background: #f4f7fb;
+}
+
+.qc-sidebar {
+    min-height: 100%;
+    padding: 28px 18px;
+    background: #14243a;
+    color: #fff;
+}
+
+.qc-sidebar-brand {
+    padding: 0 12px 28px;
+    border-bottom: 1px solid rgba(255,255,255,.12);
+    margin-bottom: 25px;
+}
+
+.qc-sidebar-brand h2 {
+    margin: 0;
+    color: #fff;
+    font-size: 17px;
+}
+
+.qc-sidebar-brand p {
+    margin: 5px 0 0;
+    color: #9fb1c8;
+    font-size: 11px;
+}
+
+.qc-sidebar-label {
+    margin: 20px 12px 10px;
+    color: #8298b4;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.qc-sidebar a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    margin-bottom: 5px;
+    border-radius: 8px;
+    color: #d5dfec;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.qc-sidebar a:hover,
+.qc-sidebar a.active {
+    background: #2459a9;
+    color: #fff;
+}
+
+.qc-sidebar a span {
+    width: 22px;
+    text-align: center;
+    font-weight: 800;
+}
+
+.qc-dashboard-main {
+    min-width: 0;
+    padding: 32px;
+}
+
+@media (max-width: 850px) {
+    .qc-dashboard-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .qc-sidebar {
+        padding: 15px;
+    }
+
+    .qc-sidebar-brand {
+        padding-bottom: 14px;
+        margin-bottom: 12px;
+    }
+
+    .qc-sidebar-label {
+        margin-top: 12px;
+    }
+
+    .qc-dashboard-main {
+        padding: 20px 15px;
+    }
+}
 </style>
 
 {% endblock %}
 
 {% block content %}
-<div class="qc-dashboard">
- <section class="qc-welcome">
-  <div class="qc-welcome-copy">
-   <p class="qc-eyebrow">
-    Quality Control &middot; Inspection Tracking
-   </p>
-   <h1>
-    Welcome, {{ request.user.get_full_name|default:request.user.username }}
-   </h1>
-   {% if profile.role == "CLIENT" %}
-   <p class="qc-welcome-description">
-    Your dedicated workspace for recording and retrieving signed Requests for Inspection.
-   </p>
-   {% elif profile.role == "ADMIN" %}
-   <p class="qc-welcome-description">
-    Monitor system users, manage RFI records, and access the main administration functions.
-   </p>
-   {% elif profile.role == "SUPERVISOR" %}
-   <p class="qc-welcome-description">
-    Manage Requests for Inspection, coordinate assignments, and monitor inspection progress.
-   </p>
-   {% else %}
-   <p class="qc-welcome-description">
-    Access your assigned RFIs, carry out inspections, and manage inspection results and punch lists.
-   </p>
-   {% endif %}
-  </div>
-  <div class="qc-role-panel">
-   <span class="qc-role-label">
-    Signed in as
-   </span>
-   <span class="qc-role-value">
-    {{ profile.get_role_display }}
-   </span>
-  </div>
- </section>
- {% if profile.role == "ADMIN" %}
- <section class="qc-section">
-  <div class="qc-section-heading">
-   <div>
-    <h2>
-     System Overview
-    </h2>
-    <p>
-     A summary of user accounts and key system functions.
-    </p>
-   </div>
-  </div>
-  <div class="qc-stats-grid">
-   <article class="qc-stat-card">
-    <div class="qc-stat-top">
-     <p class="qc-stat-label">
-      Total Users
-     </p>
-     <span aria-hidden="true" class="qc-stat-icon">
-      U
-     </span>
-    </div>
-    <p class="qc-stat-number">
-     {{ total_users }}
-    </p>
-    <p class="qc-stat-caption">
-     Registered system user{{ total_users|pluralize }}
-    </p>
-   </article>
-   <article class="qc-stat-card">
-    <div class="qc-stat-top">
-     <p class="qc-stat-label">
-      Supervisors
-     </p>
-     <span aria-hidden="true" class="qc-stat-icon">
-      S
-     </span>
-    </div>
-    <p class="qc-stat-number">
-     {{ supervisor_count }}
-    </p>
-    <p class="qc-stat-caption">
-     Registered supervisor{{ supervisor_count|pluralize }}
-    </p>
-   </article>
-   <article class="qc-stat-card">
-    <div class="qc-stat-top">
-     <p class="qc-stat-label">
-      Inspectors
-     </p>
-     <span aria-hidden="true" class="qc-stat-icon">
-      I
-     </span>
-    </div>
-    <p class="qc-stat-number">
-     {{ inspector_count }}
-    </p>
-    <p class="qc-stat-caption">
-     Registered inspector{{ inspector_count|pluralize }}
-    </p>
-   </article>
-  </div>
- </section>
- <section class="qc-section">
-  <div class="qc-section-heading">
-   <div>
-    <h2>
-     Administration
-    </h2>
-    <p>
-     Manage RFI records and system users.
-    </p>
-   </div>
-  </div>
-  <div class="qc-actions-grid">
-   <article class="qc-action-card">
-    <div aria-hidden="true" class="qc-action-icon">
-     RFI
-    </div>
-    <div class="qc-action-content">
-     <h3>
-      RFI Register
-     </h3>
-     <p class="qc-action-description">
-      Review registered requests, check their current status, and open individual RFI records.
-     </p>
-     <div class="qc-action-links">
-      <a class="qc-action-link" href="{% url 'rfi_list' %}">
-       Open RFI Register
-       <span aria-hidden="true" class="qc-arrow">
-        &rarr;
-       </span>
-      </a>
-     </div>
-    </div>
-   </article>
-   <article class="qc-action-card">
-    <div aria-hidden="true" class="qc-action-icon">
-     +
-    </div>
-    <div class="qc-action-content">
-     <h3>
-      Receive New RFI
-     </h3>
-     <p class="qc-action-description">
-      Register a newly received Request for Inspection and record its details in the system.
-     </p>
-     <div class="qc-action-links">
-      <a class="qc-action-link" href="{% url 'rfi_create' %}">
-       Register an RFI
-       <span aria-hidden="true" class="qc-arrow">
-        &rarr;
-       </span>
-      </a>
-     </div>
-    </div>
-   </article>
-   <article class="qc-action-card">
-    <div aria-hidden="true" class="qc-action-icon">
-     U
-    </div>
-    <div class="qc-action-content">
-     <h3>
-      User Management
-     </h3>
-     <p class="qc-action-description">
-      View and manage system user accounts.
-     </p>
-     <div class="qc-action-links">
-      <a class="qc-action-link" href="{% url 'user_list' %}">
-       Manage Users
-       <span aria-hidden="true" class="qc-arrow">
-        &rarr;
-       </span>
-      </a>
-     </div>
-    </div>
-   </article>
-  </div>
- </section>
- {% elif profile.role == "SUPERVISOR" %}
- <section class="qc-section">
-  <div class="qc-section-heading">
-   <div>
-    <h2>
-     Quality Control Operations
-    </h2>
-    <p>
-     Manage RFIs and access the relevant inspection records.
-    </p>
-   </div>
-  </div>
-  <div class="qc-actions-grid">
-   <article class="qc-action-card">
-    <div aria-hidden="true" class="qc-action-icon">
-     RFI
-    </div>
-    <div class="qc-action-content">
-     <h3>
-      RFI Register
-     </h3>
-     <p class="qc-action-description">
-      Review registered requests and check their status, planning information, and inspection history.
-     </p>
-     <div class="qc-action-links">
-      <a class="qc-action-link" href="{% url 'rfi_list' %}">
-       Open RFI Register
-       <span aria-hidden="true" class="qc-arrow">
-        &rarr;
-       </span>
-      </a>
-     </div>
-    </div>
-   </article>
-   <article class="qc-action-card">
-    <div aria-hidden="true" class="qc-action-icon">
-     +
-    </div>
-    <div class="qc-action-content">
-     <h3>
-      Receive New RFI
-     </h3>
-     <p class="qc-action-description">
-      Register a new Request for Inspection.
-     </p>
-     <div class="qc-action-links">
-      <a class="qc-action-link" href="{% url 'rfi_create' %}">
-       Receive RFI
-       <span aria-hidden="true" class="qc-arrow">
-        &rarr;
-       </span>
-      </a>
-     </div>
-    </div>
-   </article>
-   <article class="qc-action-card">
-    <div aria-hidden="true" class="qc-action-icon">
-     A
-    </div>
-    <div class="qc-action-content">
-     <h3>
-      Assignments
-     </h3>
-     <p class="qc-action-description">
-      Open an RFI record to access the available inspector assignment actions.
-     </p>
-     <div class="qc-action-links">
-      <a class="qc-action-link" href="{% url 'rfi_list' %}">
-       Find an RFI
-       <span aria-hidden="true" class="qc-arrow">
-        &rarr;
-       </span>
-      </a>
-     </div>
-    </div>
-   </article>
-   <article class="qc-action-card">
-    <div aria-hidden="true" class="qc-action-icon">
-     F
-    </div>
-    <div class="qc-action-content">
-     <h3>
-      Follow-up and Renewals
-     </h3>
-     <p class="qc-action-description">
-      Review RFI statuses, planned dates, and inspection history to identify records requiring attention.
-     </p>
-     <div class="qc-action-links">
-      <a class="qc-action-link" href="{% url 'rfi_list' %}">
-       Review RFI Records
-       <span aria-hidden="true" class="qc-arrow">
-        &rarr;
-       </span>
-      </a>
-     </div>
-    </div>
-   </article>
-  </div>
- </section>
- {% elif profile.role == "INSPECTOR" %}
- <section class="qc-section">
-  <div class="qc-section-heading">
-   <div>
-    <h2>
-     My QC Workspace
-    </h2>
-    <p>
-     Access assigned RFIs and continue your inspection work.
-    </p>
-   </div>
-  </div>
-  <div class="qc-actions-grid">
-   <article class="qc-action-card">
-    <div aria-hidden="true" class="qc-action-icon">
-     +
-    </div>
-    <div class="qc-action-content">
-     <h3>
-      Register New RFI
-     </h3>
-     <p class="qc-action-description">
-      Register a newly received Request for Inspection and record its details.
-     </p>
-     <div class="qc-action-links">
-      <a class="qc-action-link" href="{% url 'rfi_create' %}">
-       Register an RFI
-       <span aria-hidden="true" class="qc-arrow">
-        &rarr;
-       </span>
-      </a>
-     </div>
-    </div>
-   </article>
-   <article class="qc-action-card">
-    <div aria-hidden="true" class="qc-action-icon">
-     A
-    </div>
-    <div class="qc-action-content">
-     <h3>
-      My Assignments
-     </h3>
-     <p class="qc-action-description">
-      View your assigned requests for inspection and open the relevant records.
-     </p>
-     <div class="qc-action-links">
-      <a class="qc-action-link" href="{% url 'inspector_rfi_list' %}">
-       View Assigned RFIs
-       <span aria-hidden="true" class="qc-arrow">
-        &rarr;
-       </span>
-      </a>
-     </div>
-    </div>
-   </article>
-   <article class="qc-action-card">
-    <div aria-hidden="true" class="qc-action-icon">
-     I
-    </div>
-    <div class="qc-action-content">
-     <h3>
-      Inspections
-     </h3>
-     <p class="qc-action-description">
-      Open an assigned RFI to access the available inspection workflow.
-     </p>
-     <div class="qc-action-links">
-      <a class="qc-action-link" href="{% url 'inspector_rfi_list' %}">
-       Access Inspections
-       <span aria-hidden="true" class="qc-arrow">
-        &rarr;
-       </span>
-      </a>
-     </div>
-    </div>
-   </article>
-   <article class="qc-action-card">
-    <div aria-hidden="true" class="qc-action-icon">
-     P
-    </div>
-    <div class="qc-action-content">
-     <h3>
-      Results and Punch Lists
-     </h3>
-     <p class="qc-action-description">
-      Access assigned RFI records to work with available inspection results and punch-list records.
-     </p>
-     <div class="qc-action-links">
-      <a class="qc-action-link" href="{% url 'inspector_rfi_list' %}">
-       Open Assigned RFIs
-       <span aria-hidden="true" class="qc-arrow">
-        &rarr;
-       </span>
-      </a>
-     </div>
-    </div>
-   </article>
-  </div>
- </section>
- {% elif profile.role == "CLIENT" %}
- <section class="qc-section">
-  <div class="qc-section-heading">
-   <div>
-    <h2>
-     Client Workspace
-    </h2>
-    <p>
-     Manage your account and records of signed Requests for Inspection.
-    </p>
-   </div>
-  </div>
+    <div class="qc-dashboard-layout">
 
-  <!-- Client Statistics -->
-  <div class="qc-stats-grid">
+        <aside class="qc-sidebar">
+            <div class="qc-sidebar-brand">
+                <h2>QC RFI System</h2>
+                <p>Inspection Management</p>
+            </div>
 
-   <article class="qc-stat-card">
-    <div class="qc-stat-top">
-     <p class="qc-stat-label">Total Signed RFIs</p>
-     <span class="qc-stat-icon" aria-hidden="true">R</span>
+            <p class="qc-sidebar-label">Main Menu</p>
+
+            <a href="{% url 'dashboard' %}" class="active">
+                <span>⌂</span> Dashboard
+            </a>
+
+            {% if profile.role == "ADMIN" or profile.role == "SUPERVISOR" %}
+                <a href="{% url 'rfi_list' %}">
+                    <span>R</span> RFI Register
+                </a>
+                <a href="{% url 'rfi_create' %}">
+                    <span>+</span> Receive New RFI
+                </a>
+            {% endif %}
+
+            {% if profile.role == "ADMIN" %}
+                <a href="{% url 'user_list' %}">
+                    <span>U</span> User Management
+                </a>
+                <a href="{% url 'admin:index' %}">
+                    <span>A</span> Administration
+                </a>
+            {% endif %}
+
+            {% if profile.role == "SUPERVISOR" %}
+                <a href="{% url 'rfi_list' %}">
+                    <span>A</span> Assignments
+                </a>
+            {% endif %}
+
+            {% if profile.role == "INSPECTOR" %}
+                <a href="{% url 'inspector_rfi_list' %}">
+                    <span>A</span> My Assignments
+                </a>
+                <a href="{% url 'rfi_create' %}">
+                    <span>+</span> Register New RFI
+                </a>
+            {% endif %}
+
+            {% if profile.role == "CLIENT" %}
+                <a href="{% url 'client_signed_rfi_create' %}">
+                    <span>+</span> Record Signed RFI
+                </a>
+                <a href="{% url 'client_signed_rfi_list' %}">
+                    <span>R</span> My Signed RFIs
+                </a>
+            {% endif %}
+
+            <p class="qc-sidebar-label">Account</p>
+
+            <a href="{% url 'change_own_password' %}">
+                <span>P</span> Change Password
+            </a>
+
+            <a href="{% url 'logout' %}">
+                <span>↪</span> Sign Out
+            </a>
+        </aside>
+
+        <section class="qc-dashboard-main">
+            <div class="qc-dashboard">
+                <section class="qc-welcome">
+                    <div class="qc-welcome-copy">
+                        <p class="qc-eyebrow">
+                            Quality Control &middot; Inspection Tracking
+                        </p>
+                        <h1>
+                            Welcome, {{ request.user.get_full_name|default:request.user.username }}
+                        </h1>
+                        {% if profile.role == "CLIENT" %}
+                            <p class="qc-welcome-description">
+                                Your dedicated workspace for recording and retrieving signed Requests for Inspection.
+                            </p>
+                        {% elif profile.role == "ADMIN" %}
+                            <p class="qc-welcome-description">
+                                Monitor system users, manage RFI records, and access the main administration functions.
+                            </p>
+                        {% elif profile.role == "SUPERVISOR" %}
+                            <p class="qc-welcome-description">
+                                Manage Requests for Inspection, coordinate assignments, and monitor inspection progress.
+                            </p>
+                        {% else %}
+                            <p class="qc-welcome-description">
+                                Access your assigned RFIs, carry out inspections, and manage inspection results and punch lists.
+                            </p>
+                        {% endif %}
+                    </div>
+                    <div class="qc-role-panel">
+                        <span class="qc-role-label">
+                            Signed in as
+                        </span>
+                        <span class="qc-role-value">
+                            {{ profile.get_role_display }}
+                        </span>
+                    </div>
+                </section>
+                {% if profile.role == "ADMIN" %}
+                    <section class="qc-section">
+                        <div class="qc-section-heading">
+                            <div>
+                                <h2>
+                                    System Overview
+                                </h2>
+                                <p>
+                                    A summary of user accounts and key system functions.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="qc-stats-grid">
+                            <article class="qc-stat-card">
+                                <div class="qc-stat-top">
+                                    <p class="qc-stat-label">
+                                        Total Users
+                                    </p>
+                                    <span aria-hidden="true" class="qc-stat-icon">
+                                        U
+                                    </span>
+                                </div>
+                                <p class="qc-stat-number">
+                                    {{ total_users }}
+                                </p>
+                                <p class="qc-stat-caption">
+                                    Registered system user{{ total_users|pluralize }}
+                                </p>
+                            </article>
+                            <article class="qc-stat-card">
+                                <div class="qc-stat-top">
+                                    <p class="qc-stat-label">
+                                        Supervisors
+                                    </p>
+                                    <span aria-hidden="true" class="qc-stat-icon">
+                                        S
+                                    </span>
+                                </div>
+                                <p class="qc-stat-number">
+                                    {{ supervisor_count }}
+                                </p>
+                                <p class="qc-stat-caption">
+                                    Registered supervisor{{ supervisor_count|pluralize }}
+                                </p>
+                            </article>
+                            <article class="qc-stat-card">
+                                <div class="qc-stat-top">
+                                    <p class="qc-stat-label">
+                                        Inspectors
+                                    </p>
+                                    <span aria-hidden="true" class="qc-stat-icon">
+                                        I
+                                    </span>
+                                </div>
+                                <p class="qc-stat-number">
+                                    {{ inspector_count }}
+                                </p>
+                                <p class="qc-stat-caption">
+                                    Registered inspector{{ inspector_count|pluralize }}
+                                </p>
+                            </article>
+                        </div>
+                    </section>
+                    <section class="qc-section">
+                        <div class="qc-section-heading">
+                            <div>
+                                <h2>
+                                    Administration
+                                </h2>
+                                <p>
+                                    Manage RFI records and system users.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="qc-actions-grid">
+                            <article class="qc-action-card">
+                                <div aria-hidden="true" class="qc-action-icon">
+                                    RFI
+                                </div>
+                                <div class="qc-action-content">
+                                    <h3>
+                                        RFI Register
+                                    </h3>
+                                    <p class="qc-action-description">
+                                        Review registered requests, check their current status, and open individual RFI records.
+                                    </p>
+                                    <div class="qc-action-links">
+                                        <a class="qc-action-link" href="{% url 'rfi_list' %}">
+                                            Open RFI Register
+                                            <span aria-hidden="true" class="qc-arrow">
+                                                &rarr;
+                                            </span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </article>
+                            <article class="qc-action-card">
+                                <div aria-hidden="true" class="qc-action-icon">
+                                    +
+                                </div>
+                                <div class="qc-action-content">
+                                    <h3>
+                                        Receive New RFI
+                                    </h3>
+                                    <p class="qc-action-description">
+                                        Register a newly received Request for Inspection and record its details in the system.
+                                    </p>
+                                    <div class="qc-action-links">
+                                        <a class="qc-action-link" href="{% url 'rfi_create' %}">
+                                            Register an RFI
+                                            <span aria-hidden="true" class="qc-arrow">
+                                                &rarr;
+                                            </span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </article>
+                            <article class="qc-action-card">
+                                <div aria-hidden="true" class="qc-action-icon">
+                                    U
+                                </div>
+                                <div class="qc-action-content">
+                                    <h3>
+                                        User Management
+                                    </h3>
+                                    <p class="qc-action-description">
+                                        View and manage system user accounts.
+                                    </p>
+                                    <div class="qc-action-links">
+                                        <a class="qc-action-link" href="{% url 'user_list' %}">
+                                            Manage Users
+                                            <span aria-hidden="true" class="qc-arrow">
+                                                &rarr;
+                                            </span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </article>
+                        </div>
+                    </section>
+                {% elif profile.role == "SUPERVISOR" %}
+                    <section class="qc-section">
+                        <div class="qc-section-heading">
+                            <div>
+                                <h2>
+                                    Quality Control Operations
+                                </h2>
+                                <p>
+                                    Manage RFIs and access the relevant inspection records.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="qc-actions-grid">
+                            <article class="qc-action-card">
+                                <div aria-hidden="true" class="qc-action-icon">
+                                    RFI
+                                </div>
+                                <div class="qc-action-content">
+                                    <h3>
+                                        RFI Register
+                                    </h3>
+                                    <p class="qc-action-description">
+                                        Review registered requests and check their status, planning information, and inspection history.
+                                    </p>
+                                    <div class="qc-action-links">
+                                        <a class="qc-action-link" href="{% url 'rfi_list' %}">
+                                            Open RFI Register
+                                            <span aria-hidden="true" class="qc-arrow">
+                                                &rarr;
+                                            </span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </article>
+                            <article class="qc-action-card">
+                                <div aria-hidden="true" class="qc-action-icon">
+                                    +
+                                </div>
+                                <div class="qc-action-content">
+                                    <h3>
+                                        Receive New RFI
+                                    </h3>
+                                    <p class="qc-action-description">
+                                        Register a new Request for Inspection.
+                                    </p>
+                                    <div class="qc-action-links">
+                                        <a class="qc-action-link" href="{% url 'rfi_create' %}">
+                                            Receive RFI
+                                            <span aria-hidden="true" class="qc-arrow">
+                                                &rarr;
+                                            </span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </article>
+                            <article class="qc-action-card">
+                                <div aria-hidden="true" class="qc-action-icon">
+                                    A
+                                </div>
+                                <div class="qc-action-content">
+                                    <h3>
+                                        Assignments
+                                    </h3>
+                                    <p class="qc-action-description">
+                                        Open an RFI record to access the available inspector assignment actions.
+                                    </p>
+                                    <div class="qc-action-links">
+                                        <a class="qc-action-link" href="{% url 'rfi_list' %}">
+                                            Find an RFI
+                                            <span aria-hidden="true" class="qc-arrow">
+                                                &rarr;
+                                            </span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </article>
+                            <article class="qc-action-card">
+                                <div aria-hidden="true" class="qc-action-icon">
+                                    F
+                                </div>
+                                <div class="qc-action-content">
+                                    <h3>
+                                        Follow-up and Renewals
+                                    </h3>
+                                    <p class="qc-action-description">
+                                        Review RFI statuses, planned dates, and inspection history to identify records requiring attention.
+                                    </p>
+                                    <div class="qc-action-links">
+                                        <a class="qc-action-link" href="{% url 'rfi_list' %}">
+                                            Review RFI Records
+                                            <span aria-hidden="true" class="qc-arrow">
+                                                &rarr;
+                                            </span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </article>
+                        </div>
+                    </section>
+                {% elif profile.role == "INSPECTOR" %}
+                    <section class="qc-section">
+                        <div class="qc-section-heading">
+                            <div>
+                                <h2>My Inspection Overview</h2>
+                                <p>A quick summary of RFIs connected to your account and their current status.</p>
+                            </div>
+                        </div>
+
+                        <div class="qc-stats-grid">
+                            <article class="qc-stat-card">
+                                <div class="qc-stat-top">
+                                    <p class="qc-stat-label">My RFIs</p>
+                                    <span class="qc-stat-icon" aria-hidden="true">R</span>
+                                </div>
+                                <p class="qc-stat-number">{{ inspector_total_rfis }}</p>
+                                <p class="qc-stat-caption">RFIs created by you or currently assigned to you</p>
+                            </article>
+
+                            <article class="qc-stat-card">
+                                <div class="qc-stat-top">
+                                    <p class="qc-stat-label">Overdue</p>
+                                    <span class="qc-stat-icon" aria-hidden="true">!</span>
+                                </div>
+                                <p class="qc-stat-number">{{ inspector_overdue_rfis }}</p>
+                                <p class="qc-stat-caption">RFIs marked as overdue</p>
+                            </article>
+
+                            <article class="qc-stat-card">
+                                <div class="qc-stat-top">
+                                    <p class="qc-stat-label">Awaiting Punch</p>
+                                    <span class="qc-stat-icon" aria-hidden="true">P</span>
+                                </div>
+                                <p class="qc-stat-number">{{ inspector_awaiting_punch_rfis }}</p>
+                                <p class="qc-stat-caption">RFIs requiring punch-list action</p>
+                            </article>
+
+                            <article class="qc-stat-card">
+                                <div class="qc-stat-top">
+                                    <p class="qc-stat-label">Closed</p>
+                                    <span class="qc-stat-icon" aria-hidden="true">✓</span>
+                                </div>
+                                <p class="qc-stat-number">{{ inspector_closed_rfis }}</p>
+                                <p class="qc-stat-caption">RFIs with closed status</p>
+                            </article>
+                        </div>
+                    </section>
+
+                    <section class="qc-section">
+                        <div class="qc-section-heading">
+                            <div>
+                                <h2>Recent RFI Activity</h2>
+                                <p>The five most recently created RFIs in your workspace.</p>
+                            </div>
+                        </div>
+
+                        <div class="qc-recent-panel">
+                            {% if inspector_recent_rfis %}
+                                <div class="qc-recent-table-wrap">
+                                    <table class="qc-recent-table">
+                                        <thead>
+                                            <tr>
+                                                <th scope="col">RFI Number</th>
+                                                <th scope="col">Current Status</th>
+                                                <th scope="col">Date Created</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for rfi in inspector_recent_rfis %}
+                                                <tr>
+                                                    <td><strong>{{ rfi.rfi_number }}</strong></td>
+                                                    <td><span class="qc-status-pill">{{ rfi.get_status_display }}</span></td>
+                                                    <td>{{ rfi.created_at|date:"d M Y" }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% else %}
+                                <div class="qc-empty-state">
+                                    No RFIs are currently associated with your account.
+                                </div>
+                            {% endif %}
+                            <div class="qc-recent-footer">
+                                <a class="qc-action-link" href="{% url 'inspector_rfi_list' %}">
+                                    View All My Assignments <span class="qc-arrow" aria-hidden="true">&rarr;</span>
+                                </a>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="qc-section">
+                        <div class="qc-section-heading">
+                            <div>
+                                <h2>
+                                    My QC Workspace
+                                </h2>
+                                <p>
+                                    Access assigned RFIs and continue your inspection work.
+                                </p>
+                            </div>
+                        </div>
+                        <div class="qc-actions-grid">
+                            <article class="qc-action-card">
+                                <div aria-hidden="true" class="qc-action-icon">
+                                    +
+                                </div>
+                                <div class="qc-action-content">
+                                    <h3>
+                                        Register New RFI
+                                    </h3>
+                                    <p class="qc-action-description">
+                                        Register a newly received Request for Inspection and record its details.
+                                    </p>
+                                    <div class="qc-action-links">
+                                        <a class="qc-action-link" href="{% url 'rfi_create' %}">
+                                            Register an RFI
+                                            <span aria-hidden="true" class="qc-arrow">
+                                                &rarr;
+                                            </span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </article>
+                            <article class="qc-action-card">
+                                <div aria-hidden="true" class="qc-action-icon">
+                                    A
+                                </div>
+                                <div class="qc-action-content">
+                                    <h3>
+                                        My Assignments
+                                    </h3>
+                                    <p class="qc-action-description">
+                                        View your assigned requests for inspection and open the relevant records.
+                                    </p>
+                                    <div class="qc-action-links">
+                                        <a class="qc-action-link" href="{% url 'inspector_rfi_list' %}">
+                                            View Assigned RFIs
+                                            <span aria-hidden="true" class="qc-arrow">
+                                                &rarr;
+                                            </span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </article>
+                            <article class="qc-action-card">
+                                <div aria-hidden="true" class="qc-action-icon">
+                                    I
+                                </div>
+                                <div class="qc-action-content">
+                                    <h3>
+                                        Inspections
+                                    </h3>
+                                    <p class="qc-action-description">
+                                        Open an assigned RFI to access the available inspection workflow.
+                                    </p>
+                                    <div class="qc-action-links">
+                                        <a class="qc-action-link" href="{% url 'inspector_rfi_list' %}">
+                                            Access Inspections
+                                            <span aria-hidden="true" class="qc-arrow">
+                                                &rarr;
+                                            </span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </article>
+                            <article class="qc-action-card">
+                                <div aria-hidden="true" class="qc-action-icon">
+                                    P
+                                </div>
+                                <div class="qc-action-content">
+                                    <h3>
+                                        Results and Punch Lists
+                                    </h3>
+                                    <p class="qc-action-description">
+                                        Access assigned RFI records to work with available inspection results and punch-list records.
+                                    </p>
+                                    <div class="qc-action-links">
+                                        <a class="qc-action-link" href="{% url 'inspector_rfi_list' %}">
+                                            Open Assigned RFIs
+                                            <span aria-hidden="true" class="qc-arrow">
+                                                &rarr;
+                                            </span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </article>
+                        </div>
+                    </section>
+                {% elif profile.role == "CLIENT" %}
+                    <section class="qc-section">
+                        <div class="qc-section-heading">
+                            <div>
+                                <h2>
+                                    Client Workspace
+                                </h2>
+                                <p>
+                                    Manage your account and records of signed Requests for Inspection.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Client Statistics -->
+                        <div class="qc-stats-grid">
+
+                            <article class="qc-stat-card">
+                                <div class="qc-stat-top">
+                                    <p class="qc-stat-label">Total Signed RFIs</p>
+                                    <span class="qc-stat-icon" aria-hidden="true">R</span>
+                                </div>
+                                <p class="qc-stat-number">{{ total_signed_rfis }}</p>
+                                <p class="qc-stat-caption">Total RFIs recorded under your account</p>
+                            </article>
+
+                            <article class="qc-stat-card">
+                                <div class="qc-stat-top">
+                                    <p class="qc-stat-label">Recorded This Month</p>
+                                    <span class="qc-stat-icon" aria-hidden="true">M</span>
+                                </div>
+                                <p class="qc-stat-number">{{ signed_rfis_this_month }}</p>
+                                <p class="qc-stat-caption">RFIs recorded during the current month</p>
+                            </article>
+
+                            <article class="qc-stat-card">
+                                <div class="qc-stat-top">
+                                    <p class="qc-stat-label">Latest Record</p>
+                                    <span class="qc-stat-icon" aria-hidden="true">L</span>
+                                </div>
+
+                                {% if latest_signed_rfi %}
+                                    <p class="qc-stat-number" style="font-size:1.35rem;">
+                                        {{ latest_signed_rfi.recorded_at|date:"d M Y" }}
+                                    </p>
+                                    <p class="qc-stat-caption">
+                                        {{ latest_signed_rfi.rfi_number }}
+                                    </p>
+                                {% else %}
+                                    <p class="qc-stat-number" style="font-size:1.35rem;">--</p>
+                                    <p class="qc-stat-caption">No RFI records yet</p>
+                                {% endif %}
+                            </article>
+
+                        </div>
+
+                        <div class="qc-actions-grid">
+
+
+                            <article class="qc-action-card">
+                                <div aria-hidden="true" class="qc-action-icon">
+                                    +
+                                </div>
+                                <div class="qc-action-content">
+                                    <h3>
+                                        Record a Signed RFI
+                                    </h3>
+                                    <p class="qc-action-description">
+                                        Record an RFI signed by the client and optionally upload its signed copy.
+                                    </p>
+                                    <div class="qc-action-links">
+                                        <a class="qc-action-link" href="{% url 'client_signed_rfi_create' %}">
+                                            Add Signed RFI
+                                            <span aria-hidden="true" class="qc-arrow">
+                                                &rarr;
+                                            </span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </article>
+                            <article class="qc-action-card">
+                                <div aria-hidden="true" class="qc-action-icon">
+                                    R
+                                </div>
+                                <div class="qc-action-content">
+                                    <h3>
+                                        My Signed RFIs
+                                    </h3>
+                                    <p class="qc-action-description">
+                                        View your recorded RFIs and retrieve uploaded signed copies.
+                                    </p>
+                                    <div class="qc-action-links">
+                                        <a class="qc-action-link" href="{% url 'client_signed_rfi_list' %}">
+                                            View My Records
+                                            <span aria-hidden="true" class="qc-arrow">
+                                                &rarr;
+                                            </span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </article>
+                        </div>
+                    </section>
+                {% endif %}
+                <div class="qc-dashboard-note">
+                    {% if profile.role == "CLIENT" %}
+                        <strong>
+                            Client workspace:
+                        </strong>
+                        Your signed RFI records are saved under your account and are available from My Signed RFIs.
+                    {% else %}
+                        <strong>
+                            QC workspace:
+                        </strong>
+                        Use the dashboard links to access the functions available to your account.
+                    {% endif %}
+                </div>
+
+            </div>
+        </section>
     </div>
-    <p class="qc-stat-number">{{ total_signed_rfis }}</p>
-    <p class="qc-stat-caption">Total RFIs recorded under your account</p>
-   </article>
-
-   <article class="qc-stat-card">
-    <div class="qc-stat-top">
-     <p class="qc-stat-label">Recorded This Month</p>
-     <span class="qc-stat-icon" aria-hidden="true">M</span>
-    </div>
-    <p class="qc-stat-number">{{ signed_rfis_this_month }}</p>
-    <p class="qc-stat-caption">RFIs recorded during the current month</p>
-   </article>
-
-   <article class="qc-stat-card">
-    <div class="qc-stat-top">
-     <p class="qc-stat-label">Latest Record</p>
-     <span class="qc-stat-icon" aria-hidden="true">L</span>
-    </div>
-
-    {% if latest_signed_rfi %}
-     <p class="qc-stat-number" style="font-size:1.35rem;">
-      {{ latest_signed_rfi.recorded_at|date:"d M Y" }}
-     </p>
-     <p class="qc-stat-caption">
-      {{ latest_signed_rfi.rfi_number }}
-     </p>
-    {% else %}
-     <p class="qc-stat-number" style="font-size:1.35rem;">--</p>
-     <p class="qc-stat-caption">No RFI records yet</p>
-    {% endif %}
-   </article>
-
-  </div>
-
-  <div class="qc-actions-grid">
-
-
-   <article class="qc-action-card">
-    <div aria-hidden="true" class="qc-action-icon">
-     +
-    </div>
-    <div class="qc-action-content">
-     <h3>
-      Record a Signed RFI
-     </h3>
-     <p class="qc-action-description">
-      Record an RFI signed by the client and optionally upload its signed copy.
-     </p>
-     <div class="qc-action-links">
-      <a class="qc-action-link" href="{% url 'client_signed_rfi_create' %}">
-       Add Signed RFI
-       <span aria-hidden="true" class="qc-arrow">
-        &rarr;
-       </span>
-      </a>
-     </div>
-    </div>
-   </article>
-   <article class="qc-action-card">
-    <div aria-hidden="true" class="qc-action-icon">
-     R
-    </div>
-    <div class="qc-action-content">
-     <h3>
-      My Signed RFIs
-     </h3>
-     <p class="qc-action-description">
-      View your recorded RFIs and retrieve uploaded signed copies.
-     </p>
-     <div class="qc-action-links">
-      <a class="qc-action-link" href="{% url 'client_signed_rfi_list' %}">
-       View My Records
-       <span aria-hidden="true" class="qc-arrow">
-        &rarr;
-       </span>
-      </a>
-     </div>
-    </div>
-   </article>
-  </div>
- </section>
- {% endif %}
- <div class="qc-dashboard-note">
-  {% if profile.role == "CLIENT" %}
-  <strong>
-   Client workspace:
-  </strong>
-  Your signed RFI records are saved under your account and are available from My Signed RFIs.
-        {% else %}
-  <strong>
-   QC workspace:
-  </strong>
-  Use the dashboard links to access the functions available to your account.
-        {% endif %}
- </div>
-</div>
 {% endblock %}
