@@ -178,6 +178,39 @@ def dashboard_view(request):
             "-recorded_at"
         ).first()
 
+    elif profile.role == UserProfile.Role.INSPECTOR:
+
+        inspector_rfis = (
+            RFI.objects.filter(
+                Q(created_by=request.user)
+                | Q(
+                    assignments__inspector=request.user,
+                    assignments__unassigned_at__isnull=True,
+                )
+            )
+            .distinct()
+        )
+
+        context["inspector_total_rfis"] = inspector_rfis.count()
+
+        context["inspector_overdue_rfis"] = inspector_rfis.filter(
+            status=RFI.Status.OVERDUE
+        ).count()
+
+        context["inspector_awaiting_punch_rfis"] = inspector_rfis.filter(
+            status=RFI.Status.AWAITING_PUNCH
+        ).count()
+
+        context["inspector_closed_rfis"] = inspector_rfis.filter(
+            status=RFI.Status.CLOSED
+        ).count()
+
+        context["inspector_recent_rfis"] = (
+            inspector_rfis
+            .select_related("created_by")
+            .order_by("-created_at")[:5]
+        )
+
     return render(
         request,
         "rfi_management/dashboard.html",

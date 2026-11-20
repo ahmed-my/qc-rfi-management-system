@@ -1028,6 +1028,13 @@
             background: #991b1b;
         }
     }
+    /* Dashboard-only full-width layout */
+    .dashboard-page-container {
+        width: 100%;
+        max-width: 100%;
+        margin: 0;
+        padding: 0;
+    }
     </style>
 
     {% block extra_css %}{% endblock %}
@@ -1036,56 +1043,57 @@
 <body>
 
     {% if request.user.is_authenticated %}
-        <nav class="navbar" aria-label="Main navigation">
+        {% if request.resolver_match.url_name != 'dashboard' %}
+            <nav class="navbar" aria-label="Main navigation">
 
-            <div class="brand">
-                <div class="brand-mark" aria-hidden="true">QC</div>
-                <div class="brand-copy">
-                    <span>QC RFI Management</span>
-                    <span class="brand-subtitle">QUALITY CONTROL · INSPECTION TRACKING</span>
-                </div>
-            </div>
-
-            <div class="nav-content">
-
-                <div class="nav-links">
-                    <a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a>
-                    
-                    {% if request.user.profile.role == "ADMIN" or request.user.profile.role == "SUPERVISOR" %}
-                        <a href="{% url 'rfi_list' %}" class="nav-link">RFI Register</a>
-                        <a href="{% url 'rfi_create' %}" class="nav-link">Receive RFI</a>
-                        <a href="{% url 'admin:index' %}" class="nav-link">Admin</a>
-                    {% elif request.user.profile.role == "INSPECTOR" %}
-                        <a href="{% url 'inspector_rfi_list' %}" class="nav-link">My Assignments</a>
-                        <a href="{% url 'change_own_password' %}" Class="nav-link">Change Password</a>
-                    {% endif %}
-
-                    {% if request.user.profile.role == "ADMIN" %}
-                        <a href="{% url 'user_list' %}" class="nav-link">Users</a>
-                    {% endif %}
-                    {% if request.user.profile.role == "CLIENT"%}
-                        <a href="{% url 'change_own_password' %}" Class="nav-link">Change Password</a>
-                    {% endif %}
+                <div class="brand">
+                    <div class="brand-mark" aria-hidden="true">QC</div>
+                    <div class="brand-copy">
+                        <span>QC RFI Management</span>
+                        <span class="brand-subtitle">QUALITY CONTROL · INSPECTION TRACKING</span>
+                    </div>
                 </div>
 
-                <div class="user-area">
-                    <div class="user-details">
-                        <span class="user-name">
-                            {{ request.user.get_full_name|default:request.user.username }}
-                        </span>
-                        <span class="user-role">
-                            {{ request.user.profile.get_role_display|default:"QC User" }}
-                        </span>
+                <div class="nav-content">
+
+                    <div class="nav-links">
+                        <a href="{% url 'dashboard' %}" class="nav-link">Dashboard</a>
+                        {% if request.user.profile.role == "ADMIN" or request.user.profile.role == "SUPERVISOR" %}
+                            <a href="{% url 'rfi_list' %}" class="nav-link">RFI Register</a>
+                            <a href="{% url 'rfi_create' %}" class="nav-link">Receive RFI</a>
+                            <a href="{% url 'admin:index' %}" class="nav-link">Admin</a>
+                        {% elif request.user.profile.role == "INSPECTOR" %}
+                            <a href="{% url 'inspector_rfi_list' %}" class="nav-link">My Assignments</a>
+                            <a href="{% url 'change_own_password' %}" Class="nav-link">Change Password</a>
+                        {% endif %}
+
+                        {% if request.user.profile.role == "ADMIN" %}
+                            <a href="{% url 'user_list' %}" class="nav-link">Users</a>
+                        {% endif %}
+                        {% if request.user.profile.role == "CLIENT"%}
+                            <a href="{% url 'change_own_password' %}" Class="nav-link">Change Password</a>
+                        {% endif %}
                     </div>
 
-                    <a href="{% url 'logout' %}" class="logout">Log out</a>
-                </div>
+                    <div class="user-area">
+                        <div class="user-details">
+                            <span class="user-name">
+                                {{ request.user.get_full_name|default:request.user.username }}
+                            </span>
+                            <span class="user-role">
+                                {{ request.user.profile.get_role_display|default:"QC User" }}
+                            </span>
+                        </div>
 
-            </div>
-        </nav>
+                        <a href="{% url 'logout' %}" class="logout">Log out</a>
+                    </div>
+
+                </div>
+            </nav>
+        {% endif %}
     {% endif %}
 
-    <main class="container">
+    <main class="{% if request.resolver_match.url_name == 'dashboard' %}dashboard-page-container{% else %}container{% endif %}"></main>
 
         {% if messages %}
             <div class="messages" aria-live="polite">
@@ -1105,4 +1113,3 @@
 
 </body>
 </html>
-```

@@ -1,105 +1,409 @@
-
 {% extends "rfi_management/base.html" %}
 
-{% block title %}Register RFI{% endblock %}
+{% block title %}Register RFI | QC RFI Management System{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* =========================================================
+       RFI REGISTRATION PAGE
+       Page-specific styling; existing form processing is retained.
+    ========================================================= */
+
+    .rfi-create-page {
+        width: min(100% - 40px, 1120px);
+        margin: 42px auto 64px;
+        color: #172b4d;
+    }
+
+    .rfi-create-page,
+    .rfi-create-page * {
+        box-sizing: border-box;
+    }
+
+    .rfi-create-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 24px;
+    }
+
+    .rfi-create-heading {
+        min-width: 0;
+    }
+
+    .rfi-create-eyebrow {
+        margin: 0 0 8px;
+        color: #2459a9;
+        font-size: .72rem;
+        font-weight: 800;
+        letter-spacing: .12em;
+        text-transform: uppercase;
+    }
+
+    .rfi-create-heading h1 {
+        margin: 0 0 8px;
+        color: #14243a;
+        font-size: clamp(1.65rem, 3vw, 2.1rem);
+        font-weight: 800;
+        line-height: 1.2;
+        letter-spacing: -.035em;
+    }
+
+    .rfi-create-heading p {
+        margin: 0;
+        color: #718096;
+        font-size: .93rem;
+        line-height: 1.6;
+    }
+
+    .rfi-create-back {
+        display: inline-flex;
+        flex: 0 0 auto;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 42px;
+        padding: 10px 15px;
+        border: 1px solid #d7e0ec;
+        border-radius: 9px;
+        background: #fff;
+        color: #29496f;
+        font-size: .84rem;
+        font-weight: 750;
+        text-decoration: none;
+        transition: border-color .2s ease, background .2s ease, transform .2s ease;
+    }
+
+    .rfi-create-back:hover {
+        border-color: #9eb7d8;
+        background: #f8fbff;
+        color: #173f80;
+        transform: translateY(-1px);
+    }
+
+    .rfi-create-card {
+        overflow: hidden;
+        border: 1px solid #e0e7f0;
+        border-radius: 16px;
+        background: #fff;
+        box-shadow: 0 12px 32px rgba(23, 43, 77, .06);
+    }
+
+    .rfi-create-card-header {
+        padding: 23px 28px;
+        border-bottom: 1px solid #e8edf4;
+        background: linear-gradient(180deg, #fff 0%, #fbfcfe 100%);
+    }
+
+    .rfi-create-card-header h2 {
+        margin: 0 0 5px;
+        color: #172b4d;
+        font-size: 1.05rem;
+        font-weight: 800;
+    }
+
+    .rfi-create-card-header p {
+        margin: 0;
+        color: #8290a4;
+        font-size: .82rem;
+        line-height: 1.5;
+    }
+
+    .rfi-create-form {
+        padding: 28px;
+    }
+
+    .rfi-create-fields {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 23px 24px;
+    }
+
+    .rfi-create-field {
+        min-width: 0;
+    }
+
+    .rfi-create-field-full {
+        grid-column: 1 / -1;
+        margin-top: 24px;
+    }
+
+    .rfi-create-field label {
+        display: block;
+        margin: 0 0 9px;
+        color: #344b68;
+        font-size: .82rem;
+        font-weight: 750;
+    }
+
+    .rfi-create-page input:not([type="checkbox"]):not([type="radio"]),
+    .rfi-create-page select,
+    .rfi-create-page textarea {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        min-height: 46px;
+        padding: 11px 13px;
+        border: 1px solid #d5deea;
+        border-radius: 9px;
+        outline: none;
+        background: #fff;
+        color: #172b4d;
+        font: inherit;
+        font-size: .9rem;
+        line-height: 1.5;
+        transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    .rfi-create-page textarea {
+        min-height: 132px;
+        resize: vertical;
+    }
+
+    .rfi-create-page input::placeholder,
+    .rfi-create-page textarea::placeholder {
+        color: #9aa8ba;
+    }
+
+    .rfi-create-page input:focus,
+    .rfi-create-page select:focus,
+    .rfi-create-page textarea:focus {
+        border-color: #4c83d1;
+        background: #fff;
+        box-shadow: 0 0 0 3px rgba(59, 130, 208, .13);
+    }
+
+    .rfi-create-page input:disabled,
+    .rfi-create-page select:disabled,
+    .rfi-create-page textarea:disabled {
+        background: #f4f6f9;
+        cursor: not-allowed;
+    }
+
+    .rfi-create-errors {
+        margin-bottom: 23px;
+        padding: 14px 17px;
+        border: 1px solid #f0c7c7;
+        border-radius: 10px;
+        background: #fff7f7;
+        color: #a12c2c;
+        font-size: .86rem;
+        line-height: 1.6;
+    }
+
+    .rfi-create-errors ul {
+        margin: 0;
+        padding-left: 20px;
+    }
+
+    .rfi-create-field-error {
+        margin-top: 7px;
+        color: #b42318;
+        font-size: .78rem;
+        line-height: 1.5;
+    }
+
+    .rfi-create-actions {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        flex-wrap: wrap;
+        gap: 11px;
+        margin-top: 27px;
+        padding-top: 22px;
+        border-top: 1px solid #e8edf4;
+    }
+
+    .rfi-create-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 43px;
+        padding: 10px 19px;
+        border: 1px solid #d5deea;
+        border-radius: 9px;
+        background: #fff;
+        color: #405875;
+        font: inherit;
+        font-size: .85rem;
+        font-weight: 800;
+        text-decoration: none;
+        cursor: pointer;
+        transition: background .18s ease, border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+    }
+
+    .rfi-create-button:hover {
+        border-color: #aebed2;
+        background: #f8fafc;
+        color: #243d5c;
+    }
+
+    .rfi-create-button-primary {
+        border-color: #2459d3;
+        background: #2459d3;
+        color: #fff;
+        box-shadow: 0 4px 10px rgba(36, 89, 211, .16);
+    }
+
+    .rfi-create-button-primary:hover {
+        border-color: #1948b5;
+        background: #1948b5;
+        color: #fff;
+        box-shadow: 0 6px 14px rgba(36, 89, 211, .22);
+        transform: translateY(-1px);
+    }
+
+    .rfi-create-button:focus-visible,
+    .rfi-create-back:focus-visible {
+        outline: 3px solid rgba(59, 130, 208, .25);
+        outline-offset: 2px;
+    }
+
+    @media (max-width: 700px) {
+        .rfi-create-page {
+            width: min(100% - 28px, 1120px);
+            margin-top: 26px;
+        }
+
+        .rfi-create-header {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 16px;
+        }
+
+        .rfi-create-back {
+            align-self: flex-start;
+        }
+
+        .rfi-create-card-header,
+        .rfi-create-form {
+            padding: 20px;
+        }
+
+        .rfi-create-fields {
+            grid-template-columns: 1fr;
+            gap: 19px;
+        }
+
+        .rfi-create-field-full {
+            margin-top: 19px;
+        }
+
+        .rfi-create-actions {
+            justify-content: stretch;
+        }
+
+        .rfi-create-actions .rfi-create-button {
+            flex: 1 1 auto;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .rfi-create-back,
+        .rfi-create-button,
+        .rfi-create-page input,
+        .rfi-create-page select,
+        .rfi-create-page textarea {
+            transition: none;
+        }
+
+        .rfi-create-back:hover,
+        .rfi-create-button-primary:hover {
+            transform: none;
+        }
+    }
+</style>
+{% endblock %}
 
 {% block content %}
+<div class="rfi-create-page">
+    <header class="rfi-create-header">
+        <div class="rfi-create-heading">
+            <p class="rfi-create-eyebrow">Quality Control · Inspection Tracking</p>
+            <h1>Register New RFI</h1>
+            <p>Record a newly received Request for Inspection.</p>
+        </div>
 
-<div class="page-header">
-    <div>
-        <h1>Register New RFI</h1>
-        <p>Record a newly received Request for Inspection.</p>
-    </div>
+        <a href="{% url 'rfi_list' %}" class="rfi-create-back">
+            <span aria-hidden="true">←</span>
+            RFI Register
+        </a>
+    </header>
 
-    <a href="{% url 'rfi_list' %}" class="btn">
-        ← RFI Register
-    </a>
+    <section class="rfi-create-card" aria-labelledby="rfi-create-form-title">
+        <div class="rfi-create-card-header">
+            <h2 id="rfi-create-form-title">RFI Registration Details</h2>
+            <p>Enter the RFI reference, receipt date, planned inspection period and activity.</p>
+        </div>
+
+        <form method="post" class="rfi-create-form">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+                <div class="rfi-create-errors" role="alert">
+                    {{ form.non_field_errors }}
+                </div>
+            {% endif %}
+
+            <div class="rfi-create-fields">
+                <div class="rfi-create-field">
+                    <label for="{{ form.rfi_number.id_for_label }}">RFI Number</label>
+                    {{ form.rfi_number }}
+
+                    {% for error in form.rfi_number.errors %}
+                        <div class="rfi-create-field-error">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="rfi-create-field">
+                    <label for="{{ form.date_received.id_for_label }}">Date Received</label>
+                    {{ form.date_received }}
+
+                    {% for error in form.date_received.errors %}
+                        <div class="rfi-create-field-error">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="rfi-create-field">
+                    <label for="{{ form.original_planned_start.id_for_label }}">
+                        Inspection Planned Start
+                    </label>
+                    {{ form.original_planned_start }}
+
+                    {% for error in form.original_planned_start.errors %}
+                        <div class="rfi-create-field-error">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="rfi-create-field">
+                    <label for="{{ form.original_planned_end.id_for_label }}">
+                        Inspection Planned End
+                    </label>
+                    {{ form.original_planned_end }}
+
+                    {% for error in form.original_planned_end.errors %}
+                        <div class="rfi-create-field-error">{{ error }}</div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="rfi-create-field rfi-create-field-full">
+                <label for="{{ form.inspection_activity.id_for_label }}">Inspection Activity</label>
+                {{ form.inspection_activity }}
+
+                {% for error in form.inspection_activity.errors %}
+                    <div class="rfi-create-field-error">{{ error }}</div>
+                {% endfor %}
+            </div>
+
+            <div class="rfi-create-actions">
+                <a href="{% url 'dashboard' %}" class="rfi-create-button">Cancel</a>
+                <button type="submit" class="rfi-create-button rfi-create-button-primary">
+                    Register RFI
+                </button>
+            </div>
+        </form>
+    </section>
 </div>
-
-<div class="card">
-
-    <form method="post">
-        {% csrf_token %}
-
-        {% if form.non_field_errors %}
-            <div class="form-errors">
-                {{ form.non_field_errors }}
-            </div>
-        {% endif %}
-
-        <h2>RFI Registration Details</h2>
-
-        <div class="form-grid">
-
-            <div class="form-group">
-                <label for="{{ form.rfi_number.id_for_label }}">
-                    RFI Number
-                </label>
-                {{ form.rfi_number }}
-
-                {% for error in form.rfi_number.errors %}
-                    <div class="field-error">{{ error }}</div>
-                {% endfor %}
-            </div>
-
-            <div class="form-group">
-                <label for="{{ form.date_received.id_for_label }}">
-                    Date Received
-                </label>
-                {{ form.date_received }}
-
-                {% for error in form.date_received.errors %}
-                    <div class="field-error">{{ error }}</div>
-                {% endfor %}
-            </div>
-
-            <div class="form-group">
-                <label for="{{ form.original_planned_start.id_for_label }}">
-                    Inspection Planned Start
-                </label>
-                {{ form.original_planned_start }}
-
-                {% for error in form.original_planned_start.errors %}
-                    <div class="field-error">{{ error }}</div>
-                {% endfor %}
-            </div>
-
-            <div class="form-group">
-                <label for="{{ form.original_planned_end.id_for_label }}">
-                    Inspection Planned End
-                </label>
-                {{ form.original_planned_end }}
-
-                {% for error in form.original_planned_end.errors %}
-                    <div class="field-error">{{ error }}</div>
-                {% endfor %}
-            </div>
-
-        </div>
-
-        <div class="form-group">
-            <label for="{{ form.inspection_activity.id_for_label }}">
-                Inspection Activity
-            </label>
-            {{ form.inspection_activity }}
-
-            {% for error in form.inspection_activity.errors %}
-                <div class="field-error">{{ error }}</div>
-            {% endfor %}
-        </div>
-
-        <div class="form-actions">
-            <button type="submit" class="btn btn-primary">
-                Register RFI
-            </button>
-
-            <a href="{% url 'dashboard' %}" class="btn">
-                Cancel
-            </a>
-        </div>
-
-    </form>
-
-</div>
-
 {% endblock %}
