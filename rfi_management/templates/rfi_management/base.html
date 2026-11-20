@@ -1057,6 +1057,7 @@
                         <a href="{% url 'admin:index' %}" class="nav-link">Admin</a>
                     {% elif request.user.profile.role == "INSPECTOR" %}
                         <a href="{% url 'inspector_rfi_list' %}" class="nav-link">My Assignments</a>
+                        <a href="{% url 'change_own_password' %}" Class="nav-link">Change Password</a>
                     {% endif %}
 
                     {% if request.user.profile.role == "ADMIN" %}
