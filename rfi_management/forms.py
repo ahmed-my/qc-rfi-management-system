@@ -657,17 +657,49 @@ class PunchItemCreateForm(forms.ModelForm):
         }
 
 
+
 class ClientSignedRFIForm(forms.ModelForm):
+
+    rfi_activity = forms.CharField(
+        required=True,
+        label="RFI Activity",
+        widget=forms.Textarea(
+            attrs={
+                "class": "form-control",
+                "rows": 4,
+                "placeholder": "Describe the inspection activity carried out",
+            }
+        ),
+    )
+
+    number_of_items_inspected = forms.IntegerField(
+        required=True,
+        min_value=1,
+        label="Number of Items Inspected",
+        widget=forms.NumberInput(
+            attrs={
+                "class": "form-control",
+                "min": 1,
+                "step": 1,
+                "placeholder": "Enter number of items inspected",
+            }
+        ),
+    )
 
     class Meta:
         model = ClientSignedRFI
-        fields = ["rfi_number", "signed_copy"]
+        fields = [
+            "rfi_number",
+            "rfi_activity",
+            "number_of_items_inspected",
+            "signed_copy",
+        ]
 
         widgets = {
             "rfi_number": forms.TextInput(
                 attrs={
                     "class": "form-control",
-                    "placeholder": "Enter last five digits or full RFI number",
+                    "placeholder": "Enter the RFI number",
                 }
             ),
             "signed_copy": forms.ClearableFileInput(

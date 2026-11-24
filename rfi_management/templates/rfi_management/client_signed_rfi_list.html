@@ -1,31 +1,626 @@
+
 {% extends "rfi_management/base.html" %}
 
-{% block content %}
-<div class="qc-dashboard">
+{% block title %}My Signed RFIs{% endblock %}
 
-    <div class="qc-page-header">
-        <div>
-            <h2>My Signed RFIs</h2>
-            <p>View and retrieve your records of signed RFIs.</p>
+{% block extra_css %}
+<style>
+    .signed-list-page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 12px 0 35px;
+        color: #26364b;
+    }
+
+    .signed-list-page,
+    .signed-list-page * {
+        box-sizing: border-box;
+    }
+
+    /* Header */
+    .signed-list-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 28px;
+    }
+
+    .signed-list-title-group {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .signed-list-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 52px;
+        height: 52px;
+        flex-shrink: 0;
+        border-radius: 13px;
+        background: #e8efff;
+        color: #2563eb;
+        font-size: 24px;
+    }
+
+    .signed-list-eyebrow {
+        margin: 0 0 5px;
+        color: #64748b;
+        font-size: 0.72rem;
+        font-weight: 750;
+        letter-spacing: 0.09em;
+        text-transform: uppercase;
+    }
+
+    .signed-list-header h1 {
+        margin: 0 0 5px;
+        color: #17365d;
+        font-size: clamp(1.4rem, 2.5vw, 1.85rem);
+        font-weight: 750;
+    }
+
+    .signed-list-description {
+        margin: 0;
+        color: #64748b;
+        font-size: 0.87rem;
+        line-height: 1.6;
+    }
+
+    .signed-list-add-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 44px;
+        padding: 11px 18px;
+        border: 1px solid #2563eb;
+        border-radius: 8px;
+        background: #2563eb;
+        color: #ffffff;
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-decoration: none;
+        white-space: nowrap;
+        transition: background 0.2s;
+    }
+
+    .signed-list-add-btn:hover {
+        background: #1d4ed8;
+        color: #ffffff;
+    }
+
+    /* Summary cards */
+    .signed-list-summary {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+        margin-bottom: 27px;
+    }
+
+    .signed-summary-card {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        min-width: 0;
+        padding: 21px;
+        border: 1px solid #dce4ef;
+        border-radius: 12px;
+        background: #ffffff;
+        box-shadow: 0 4px 15px rgba(23, 54, 93, 0.035);
+    }
+
+    .signed-summary-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 45px;
+        height: 45px;
+        flex-shrink: 0;
+        border-radius: 11px;
+        background: #eaf1ff;
+        color: #2563eb;
+        font-size: 21px;
+    }
+
+    .signed-summary-label {
+        margin: 0 0 5px;
+        color: #64748b;
+        font-size: 0.77rem;
+        font-weight: 600;
+    }
+
+    .signed-summary-value {
+        margin: 0;
+        color: #17365d;
+        font-size: 1.45rem;
+        font-weight: 800;
+        line-height: 1.2;
+        overflow-wrap: anywhere;
+    }
+
+    .signed-summary-value.date-value {
+        font-size: 1.05rem;
+    }
+
+    /* Records card */
+    .signed-records-card {
+        overflow: hidden;
+        border: 1px solid #dce4ef;
+        border-radius: 13px;
+        background: #ffffff;
+        box-shadow: 0 5px 18px rgba(23, 54, 93, 0.04);
+    }
+
+    .signed-records-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        padding: 22px 25px;
+        border-bottom: 1px solid #e8edf4;
+        background: #fbfcfe;
+    }
+
+    .signed-records-heading h2 {
+        margin: 0 0 5px;
+        color: #17365d;
+        font-size: 1.02rem;
+        font-weight: 750;
+    }
+
+    .signed-records-heading p {
+        margin: 0;
+        color: #64748b;
+        font-size: 0.8rem;
+    }
+
+    .signed-record-count {
+        padding: 6px 11px;
+        border: 1px solid #dce6f7;
+        border-radius: 20px;
+        background: #eef4ff;
+        color: #2454a6;
+        font-size: 0.76rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    /* Table */
+    .signed-records-table-wrap {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .signed-records-table {
+        width: 100%;
+        min-width: 850px;
+        border-collapse: collapse;
+    }
+
+    .signed-records-table thead {
+        background: #f6f8fc;
+    }
+
+    .signed-records-table th {
+        padding: 14px 17px;
+        color: #64748b;
+        font-size: 0.72rem;
+        font-weight: 750;
+        letter-spacing: 0.045em;
+        text-align: left;
+        text-transform: uppercase;
+        white-space: nowrap;
+    }
+
+    .signed-records-table td {
+        padding: 17px;
+        border-top: 1px solid #edf1f6;
+        color: #475569;
+        font-size: 0.83rem;
+        line-height: 1.6;
+        vertical-align: middle;
+    }
+
+    .signed-records-table tbody tr:hover {
+        background: #fafcff;
+    }
+
+    .signed-record-number {
+        color: #17365d;
+        font-weight: 750;
+    }
+
+    .signed-record-activity {
+        max-width: 260px;
+        color: #475569;
+        overflow-wrap: anywhere;
+    }
+
+    .signed-record-item-count {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 34px;
+        padding: 5px 10px;
+        border-radius: 7px;
+        background: #eef4ff;
+        color: #2454a6;
+        font-weight: 750;
+    }
+
+    .signed-record-date {
+        white-space: nowrap;
+    }
+
+    .signed-record-file {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #2563eb;
+        font-weight: 700;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .signed-record-file:hover {
+        color: #1d4ed8;
+        text-decoration: underline;
+    }
+
+    .signed-record-no-file {
+        color: #94a3b8;
+        font-size: 0.78rem;
+    }
+
+    /* Empty state */
+    .signed-list-empty {
+        padding: 55px 20px;
+        text-align: center;
+    }
+
+    .signed-list-empty-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 65px;
+        height: 65px;
+        margin: 0 auto 17px;
+        border-radius: 16px;
+        background: #eef4ff;
+        color: #2563eb;
+        font-size: 29px;
+    }
+
+    .signed-list-empty h3 {
+        margin: 0 0 8px;
+        color: #17365d;
+        font-size: 1.05rem;
+        font-weight: 750;
+    }
+
+    .signed-list-empty p {
+        max-width: 390px;
+        margin: 0 auto 20px;
+        color: #64748b;
+        font-size: 0.84rem;
+        line-height: 1.7;
+    }
+
+    @media (max-width: 800px) {
+        .signed-list-summary {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 600px) {
+        .signed-list-header {
+            align-items: flex-start;
+            flex-direction: column;
+        }
+
+        .signed-list-add-btn {
+            width: 100%;
+        }
+
+        .signed-list-summary {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .signed-summary-card {
+            padding: 17px;
+        }
+
+        .signed-records-heading {
+            padding: 18px;
+        }
+    }
+
+    /* Excel export section */
+    .signed-export-card {
+        margin-bottom: 25px;
+        padding: 23px 25px;
+        border: 1px solid #dce4ef;
+        border-radius: 13px;
+        background: #ffffff;
+        box-shadow: 0 5px 18px rgba(23, 54, 93, 0.04);
+    }
+
+    .signed-export-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .signed-export-heading h2 {
+        margin: 0 0 5px;
+        color: #17365d;
+        font-size: 1rem;
+        font-weight: 750;
+    }
+
+    .signed-export-heading p {
+        margin: 0;
+        color: #64748b;
+        font-size: 0.82rem;
+    }
+
+    .signed-export-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 43px;
+        height: 43px;
+        border-radius: 10px;
+        background: #e8f5ed;
+        color: #16834a;
+        font-size: 21px;
+    }
+
+    .signed-export-form {
+        display: grid;
+        grid-template-columns: 1fr 1fr auto;
+        align-items: end;
+        gap: 15px;
+    }
+
+    .signed-export-field label {
+        display: block;
+        margin-bottom: 7px;
+        color: #263b59;
+        font-size: 0.82rem;
+        font-weight: 700;
+    }
+
+    .signed-export-field select,
+    .signed-export-field input {
+        width: 100%;
+        min-height: 43px;
+        padding: 9px 12px;
+        border: 1px solid #cbd8e8;
+        border-radius: 8px;
+        background: #ffffff;
+        color: #26364b;
+        font: inherit;
+        font-size: 0.85rem;
+    }
+
+    .signed-export-field select:focus,
+    .signed-export-field input:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+
+    .signed-export-action button {
+        min-height: 43px;
+        padding: 10px 17px;
+        border: 1px solid #16834a;
+        border-radius: 8px;
+        background: #16834a;
+        color: #ffffff;
+        font-size: 0.83rem;
+        font-weight: 700;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .signed-export-action button:hover {
+        background: #116b3c;
+    }
+
+    .signed-export-help {
+        display: block;
+        margin-top: 14px;
+        color: #718096;
+        font-size: 0.76rem;
+    }
+
+    @media (max-width: 650px) {
+        .signed-export-card {
+            padding: 19px;
+        }
+
+        .signed-export-form {
+            grid-template-columns: 1fr;
+        }
+
+        .signed-export-action button {
+            width: 100%;
+        }
+    }
+
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="qc-dashboard signed-list-page">
+
+    <header class="signed-list-header">
+
+        <div class="signed-list-title-group">
+            <div class="signed-list-icon" aria-hidden="true">
+                &#128196;
+            </div>
+
+            <div>
+                <p class="signed-list-eyebrow">
+                    Client Portal / QC RFI Management
+                </p>
+
+                <h1>My Signed RFIs</h1>
+
+                <p class="signed-list-description">
+                    View, manage and retrieve your submitted signed RFI records.
+                </p>
+            </div>
         </div>
 
         <a href="{% url 'client_signed_rfi_create' %}"
-           class="btn btn-primary">
+           class="signed-list-add-btn">
             + Record Signed RFI
         </a>
-    </div>
 
-    <div class="qc-card">
+    </header>
 
-        <h3>Recorded RFIs</h3>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <section class="signed-list-summary">
+
+        <div class="signed-summary-card">
+            <div class="signed-summary-icon" aria-hidden="true">
+                &#128203;
+            </div>
+
+            <div>
+                <p class="signed-summary-label">Total Signed RFIs</p>
+                <p class="signed-summary-value">
+                    {{ total_signed_rfis }}
+                </p>
+            </div>
+        </div>
+
+        <div class="signed-summary-card">
+            <div class="signed-summary-icon" aria-hidden="true">
+                &#128221;
+            </div>
+
+            <div>
+                <p class="signed-summary-label">Total Items Inspected</p>
+                <p class="signed-summary-value">
+                    {{ total_items_inspected }}
+                </p>
+            </div>
+        </div>
+
+        <div class="signed-summary-card">
+            <div class="signed-summary-icon" aria-hidden="true">
+                &#128197;
+            </div>
+
+            <div>
+                <p class="signed-summary-label">Latest Submission</p>
+
+                <p class="signed-summary-value date-value">
+                    {% if latest_submission %}
+                        {{ latest_submission|date:"d M Y" }}
+                    {% else %}
+                        —
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- Excel Export Section -->
+    <section class="signed-export-card">
+
+        <div class="signed-export-heading">
+            <div>
+                <h2>Export RFI Records</h2>
+                <p>Download your signed RFI records for a selected reporting period.</p>
+            </div>
+
+            <div class="signed-export-icon">
+                &#128229;
+            </div>
+        </div>
+
+        <form method="get" action="{% url 'client_signed_rfi_export' %}"
+              class="signed-export-form">
+
+            <div class="signed-export-field">
+                <label for="export-period">Reporting Period</label>
+
+                <select name="period" id="export-period" required>
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
+                </select>
+            </div>
+
+            <div class="signed-export-field">
+                <label for="export-date">Select Date</label>
+
+                <input
+                    type="date"
+                    name="date"
+                    id="export-date"
+                    value="{% now 'Y-m-d' %}"
+                    required
+                >
+            </div>
+
+            <div class="signed-export-action">
+                <button type="submit">
+                    &#128229; Export to Excel
+                </button>
+            </div>
+
+        </form>
+
+        <small class="signed-export-help">
+            Weekly reports run Monday to Sunday. Monthly reports cover the
+            entire month containing the selected date.
+        </small>
+
+    </section>
+
+    <section class="signed-records-card">
+
+        <div class="signed-records-heading">
+            <div>
+                <h2>Recorded RFIs</h2>
+                <p>Your submitted signed RFI records and inspection details.</p>
+            </div>
+
+            <span class="signed-record-count">
+                {{ total_signed_rfis }} Record{{ total_signed_rfis|pluralize }}
+            </span>
+        </div>
 
         {% if records %}
-            <div class="table-responsive">
-                <table class="table">
+
+            <div class="signed-records-table-wrap">
+
+                <table class="signed-records-table">
+
                     <thead>
                         <tr>
                             <th>S/N</th>
                             <th>RFI Number</th>
+                            <th>RFI Activity</th>
+                            <th>Items Inspected</th>
                             <th>Date Recorded</th>
                             <th>Signed Copy</th>
                         </tr>
@@ -33,46 +628,82 @@
 
                     <tbody>
                         {% for record in records %}
+
                             <tr>
                                 <td>{{ forloop.counter }}</td>
 
                                 <td>
-                                    <strong>{{ record.rfi_number }}</strong>
+                                    <span class="signed-record-number">
+                                        {{ record.rfi_number }}
+                                    </span>
                                 </td>
 
                                 <td>
-                                    {{ record.recorded_at|date:"d M Y, h:i A" }}
+                                    <div class="signed-record-activity">
+                                        {{ record.rfi_activity|default:"—"|linebreaksbr }}
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <span class="signed-record-item-count">
+                                        {{ record.number_of_items_inspected|default:"—" }}
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <span class="signed-record-date">
+                                        {{ record.recorded_at|date:"d M Y, h:i A" }}
+                                    </span>
                                 </td>
 
                                 <td>
                                     {% if record.signed_copy %}
                                         <a href="{% url 'client_signed_rfi_file' record.pk %}"
-                                            target="_blank"
-                                            rel="noopener noreferrer">
-                                                View Signed Copy
+                                           target="_blank"
+                                           rel="noopener noreferrer"
+                                           class="signed-record-file">
+                                            View Signed Copy
                                         </a>
                                     {% else %}
-                                        <span class="text-muted">
+                                        <span class="signed-record-no-file">
                                             No attachment
                                         </span>
                                     {% endif %}
                                 </td>
                             </tr>
+
                         {% endfor %}
                     </tbody>
+
                 </table>
+
             </div>
 
         {% else %}
-            <div style="padding: 30px 15px; text-align: center;">
-                <h4>No Signed RFI Records Yet</h4>
+
+            <div class="signed-list-empty">
+
+                <div class="signed-list-empty-icon" aria-hidden="true">
+                    &#128196;
+                </div>
+
+                <h3>No Signed RFI Records Yet</h3>
+
                 <p>
-                    You have not recorded any signed RFIs.
-                    Use the button above to add your first record.
+                    You have not submitted any signed RFI records.
+                    Start by recording your first signed Request for Inspection.
                 </p>
+
+                <a href="{% url 'client_signed_rfi_create' %}"
+                   class="signed-list-add-btn">
+                    + Record Your First RFI
+                </a>
+
             </div>
+
         {% endif %}
 
-    </div>
+    </section>
+
 </div>
 {% endblock %}

@@ -27,6 +27,7 @@ from .views import (
     client_signed_rfi_list_view,
     client_signed_rfi_create_view,
     client_signed_rfi_file_view,
+    client_signed_rfi_export_view,
 )
 
 urlpatterns = [
@@ -181,5 +182,11 @@ urlpatterns = [
         "client/signed-rfis/<int:pk>/file/",
         client_signed_rfi_file_view,
         name="client_signed_rfi_file",
+    ),
+
+    path(
+        "client/signed-rfis/export/",
+        client_signed_rfi_export_view,
+        name="client_signed_rfi_export",
     ),
 ]

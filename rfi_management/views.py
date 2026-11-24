@@ -1,4 +1,11 @@
+from io import BytesIO
 import os
+
+from datetime import date, timedelta
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Border, Side, Alignment
+from openpyxl.utils import get_column_letter
+from django.http import FileResponse, Http404, HttpResponse
 
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout, update_session_auth_hash
@@ -8,8 +15,7 @@ from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.db import transaction, IntegrityError
-from django.db.models import Max, Q
-from django.http import FileResponse, Http404
+from django.db.models import Max, Q, Sum
 
 from .forms import (
     LoginForm,
@@ -482,26 +488,328 @@ def user_password_view(request, user_id):
 
 @login_required
 def client_signed_rfi_list_view(request):
-    """Display only signed RFI records belonging to the logged-in client."""
+    """Display signed RFI records belonging to the logged-in client."""
 
     profile = getattr(request.user, "profile", None)
 
     if profile is None or profile.role != UserProfile.Role.CLIENT:
-        messages.error(request, "You do not have permission to access this page.")
+        messages.error(
+            request,
+            "You do not have permission to access this page."
+        )
         return redirect("dashboard")
 
     records = ClientSignedRFI.objects.filter(
         client=request.user
     ).order_by("-recorded_at")
 
+    summary = records.aggregate(
+        total_items=Sum("number_of_items_inspected"),
+        latest_submission=Max("recorded_at"),
+    )
+
+    context = {
+        "records": records,
+        "total_signed_rfis": records.count(),
+        "total_items_inspected": summary["total_items"] or 0,
+        "latest_submission": summary["latest_submission"],
+    }
+
     return render(
         request,
         "rfi_management/client_signed_rfi_list.html",
-        {
-            "records": records,
-        },
+        context,
     )
 
+
+@login_required
+def client_signed_rfi_export_view(request):
+    """Export the logged-in client's signed RFI records to Excel."""
+
+    profile = getattr(request.user, "profile", None)
+
+    if profile is None or profile.role != UserProfile.Role.CLIENT:
+        messages.error(
+            request,
+            "You do not have permission to access this page."
+        )
+        return redirect("dashboard")
+
+    period = request.GET.get("period", "").lower()
+    selected_date_text = request.GET.get("date", "")
+
+    if period not in ["daily", "weekly", "monthly"]:
+        return HttpResponse(
+            "Invalid reporting period.",
+            status=400,
+        )
+
+    try:
+        selected_date = date.fromisoformat(selected_date_text)
+    except (ValueError, TypeError):
+        return HttpResponse(
+            "Please provide a valid reporting date.",
+            status=400,
+        )
+
+    # Determine the reporting period.
+    if period == "daily":
+        start_date = selected_date
+        end_date = selected_date
+        period_label = "Daily"
+
+    elif period == "weekly":
+        start_date = selected_date - timedelta(
+            days=selected_date.weekday()
+        )
+        end_date = start_date + timedelta(days=6)
+        period_label = "Weekly"
+
+    else:
+        start_date = selected_date.replace(day=1)
+
+        if selected_date.month == 12:
+            next_month = date(selected_date.year + 1, 1, 1)
+        else:
+            next_month = date(
+                selected_date.year,
+                selected_date.month + 1,
+                1,
+            )
+
+        end_date = next_month - timedelta(days=1)
+        period_label = "Monthly"
+
+    # Retrieve only this client's records within the selected period.
+    records = ClientSignedRFI.objects.filter(
+        client=request.user,
+        recorded_at__date__gte=start_date,
+        recorded_at__date__lte=end_date,
+    ).order_by("recorded_at")
+
+    total_records = records.count()
+
+    total_items = (
+        records.aggregate(
+            total=Sum("number_of_items_inspected")
+        )["total"] or 0
+    )
+
+    # Create the Excel workbook.
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = "Signed RFI Records"
+
+    # Colours.
+    navy = "17365D"
+    blue = "2563EB"
+    light_blue = "E8EFFA"
+    white = "FFFFFF"
+    grey = "64748B"
+
+    # Report heading.
+    worksheet.merge_cells("A1:F1")
+    worksheet["A1"] = "CLIENT SIGNED RFI REPORT"
+    worksheet["A1"].font = Font(
+        name="Arial",
+        size=16,
+        bold=True,
+        color=white,
+    )
+    worksheet["A1"].fill = PatternFill(
+        "solid",
+        fgColor=navy,
+    )
+    worksheet["A1"].alignment = Alignment(
+        horizontal="center",
+        vertical="center",
+    )
+    worksheet.row_dimensions[1].height = 32
+
+    # Reporting information.
+    worksheet.merge_cells("A2:F2")
+    worksheet["A2"] = (
+        f"{period_label} Report | "
+        f"{start_date:%d %b %Y} - {end_date:%d %b %Y}"
+    )
+    worksheet["A2"].font = Font(
+        name="Arial",
+        size=11,
+        bold=True,
+        color=navy,
+    )
+    worksheet["A2"].alignment = Alignment(
+        horizontal="center",
+    )
+
+    worksheet.merge_cells("A3:F3")
+    worksheet["A3"] = f"Client: {request.user.get_full_name() or request.user.username}"
+    worksheet["A3"].font = Font(
+        name="Arial",
+        size=10,
+        color=grey,
+    )
+
+    # Summary section.
+    worksheet["A5"] = "Total Signed RFIs"
+    worksheet["B5"] = total_records
+    worksheet["C5"] = "Total Items Inspected"
+    worksheet["D5"] = total_items
+
+    for cell in ["A5", "C5"]:
+        worksheet[cell].font = Font(
+            bold=True,
+            color=white,
+        )
+        worksheet[cell].fill = PatternFill(
+            "solid",
+            fgColor=blue,
+        )
+
+    for cell in ["B5", "D5"]:
+        worksheet[cell].font = Font(
+            bold=True,
+            color=navy,
+        )
+        worksheet[cell].fill = PatternFill(
+            "solid",
+            fgColor=light_blue,
+        )
+
+    # Table headings.
+    headers = [
+        "S/N",
+        "RFI Number",
+        "RFI Activity",
+        "Items Inspected",
+        "Date Recorded",
+        "Signed Copy",
+    ]
+
+    header_row = 7
+
+    for column, heading in enumerate(headers, start=1):
+        cell = worksheet.cell(
+            row=header_row,
+            column=column,
+            value=heading,
+        )
+        cell.font = Font(
+            bold=True,
+            color=white,
+        )
+        cell.fill = PatternFill(
+            "solid",
+            fgColor=navy,
+        )
+        cell.alignment = Alignment(
+            horizontal="center",
+            vertical="center",
+            wrap_text=True,
+        )
+
+    # Populate records.
+    for index, record in enumerate(records, start=1):
+        row = header_row + index
+
+        values = [
+            index,
+            record.rfi_number,
+            record.rfi_activity,
+            record.number_of_items_inspected,
+            timezone.localtime(record.recorded_at).strftime(
+                "%d %b %Y, %I:%M %p"
+            ),
+            "Attached" if record.signed_copy else "No attachment",
+        ]
+
+        for column, value in enumerate(values, start=1):
+            cell = worksheet.cell(
+                row=row,
+                column=column,
+                value=value,
+            )
+            cell.alignment = Alignment(
+                vertical="top",
+                wrap_text=True,
+            )
+
+            if index % 2 == 0:
+                cell.fill = PatternFill(
+                    "solid",
+                    fgColor="F4F7FB",
+                )
+
+        worksheet.cell(row=row, column=1).alignment = Alignment(
+            horizontal="center",
+            vertical="top",
+        )
+        worksheet.cell(row=row, column=4).alignment = Alignment(
+            horizontal="center",
+            vertical="top",
+        )
+
+    # Column widths.
+    column_widths = {
+        "A": 8,
+        "B": 32,
+        "C": 55,
+        "D": 18,
+        "E": 25,
+        "F": 20,
+    }
+
+    for column, width in column_widths.items():
+        worksheet.column_dimensions[column].width = width
+
+    worksheet.row_dimensions[header_row].height = 30
+
+    # Freeze table headings and enable filters.
+    worksheet.freeze_panes = "A8"
+    worksheet.auto_filter.ref = (
+        f"A{header_row}:F{header_row + total_records}"
+    )
+
+    # Add borders.
+    thin_border = Border(
+        bottom=Side(
+            style="thin",
+            color="DCE4EF",
+        )
+    )
+
+    for row in worksheet.iter_rows(
+        min_row=header_row,
+        max_row=header_row + total_records,
+        min_col=1,
+        max_col=6,
+    ):
+        for cell in row:
+            cell.border = thin_border
+
+    # Prepare Excel download.
+    output = BytesIO()
+    workbook.save(output)
+    output.seek(0)
+
+    filename = (
+        f"signed_rfi_{period}_"
+        f"{start_date:%Y%m%d}_{end_date:%Y%m%d}.xlsx"
+    )
+
+    response = HttpResponse(
+        output.getvalue(),
+        content_type=(
+            "application/vnd.openxmlformats-officedocument."
+            "spreadsheetml.sheet"
+        ),
+    )
+
+    response["Content-Disposition"] = (
+        f'attachment; filename="{filename}"'
+    )
+
+    return response
 
 @login_required
 def client_signed_rfi_file_view(request, pk):

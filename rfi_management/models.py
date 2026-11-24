@@ -970,6 +970,15 @@ class ClientSignedRFI(models.Model):
         db_index=True,
     )
 
+    rfi_activity = models.TextField(
+        blank=True,
+    )
+
+    number_of_items_inspected = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+    )
+
     signed_copy = models.FileField(
         upload_to="client_signed_rfis/%Y/%m/",
         storage=PrivateMediaStorage(),
