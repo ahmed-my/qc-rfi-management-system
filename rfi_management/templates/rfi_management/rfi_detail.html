@@ -930,48 +930,16 @@
                                     {% if inspection.overall_result == "PARTIALLY_ACCEPTED" and rfi.status == "AWAITING_PUNCH" %}
 
                                         {% with existing_punch_list=inspection.punch_lists.all|first %}
-
                                             {% if existing_punch_list %}
-
                                                 <a
                                                     href="{% url 'punch_list_detail' punch_list_id=existing_punch_list.id %}"
                                                     class="btn"
                                                 >
                                                     Open Punch List
                                                 </a>
-
-                                            {% else %}
-
-                                                {% if request.user.profile.role == "ADMIN" or request.user.profile.role == "SUPERVISOR" %}
-
-                                                <a
-                                                    href="{% url 'punch_list_create' inspection_id=inspection.id %}"
-                                                    class="btn btn-primary"
-                                                >
-                                                    Create Punch List
-                                                </a>
-
-                                            {% elif request.user.profile.role == "INSPECTOR" and inspection.inspector_id == request.user.id %}
-
-                                                {% if rfi.created_by_id == request.user.id or active_assignment and active_assignment.inspector_id == request.user.id %}
-
-                                                    <a
-                                                        href="{% url 'punch_list_create' inspection_id=inspection.id %}"
-                                                        class="btn btn-primary"
-                                                    >
-                                                        Create Punch List
-                                                    </a>
-
-                                                {% else %}
-                                                    —
-                                                {% endif %}
-
                                             {% else %}
                                                 —
                                             {% endif %}
-
-                                            {% endif %}
-
                                         {% endwith %}
 
                                     {% else %}

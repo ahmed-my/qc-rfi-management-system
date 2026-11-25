@@ -1,4 +1,4 @@
-from django.urls import path
+﻿from django.urls import path
 
 from .views import (
     dashboard_view,
@@ -16,7 +16,6 @@ from .views import (
     start_inspection_view,
     inspection_detail_view,
     punch_list_detail_view,
-    punch_list_create_view,
     punch_item_create_view,
     rfi_reassign_view,
     rfi_delete_view,
@@ -113,12 +112,6 @@ urlpatterns = [
         ),
 
     path(
-        "inspections/<int:inspection_id>/punch-list/create/",
-        punch_list_create_view,
-        name="punch_list_create",
-    ),
-
-    path(
         "punch-lists/<int:punch_list_id>/",
         punch_list_detail_view,
         name="punch_list_detail",
@@ -141,7 +134,7 @@ urlpatterns = [
         rfi_delete_view,
         name="rfi_delete",
     ),
-       
+
     path(
         "punch-lists/<int:punch_list_id>/upload-signed/",
         punch_list_signed_upload_view,
