@@ -1,221 +1,659 @@
 
 {% extends "rfi_management/base.html" %}
 
-{% block title %}Punch List Details{% endblock %}
+{% block title %}Punch List Details | QC RFI Management{% endblock %}
 
 {% block content %}
-<div class="page-header">
-    <div>
-        <h1>Punch List {{ punch_list.punch_list_number }}</h1>
-        <p>Outstanding QC items and verification status.</p>
-    </div>
 
-    <div>
-        <a href="{% url 'rfi_detail' rfi_id=rfi.id %}" class="btn">
-            Back to RFI
-        </a>
-    </div>
-</div>
+<style>
+    .punch-page {
+        max-width: 1240px;
+        margin: 34px auto;
+        padding: 0 20px 35px;
+        color: #142943;
+    }
 
-<div class="card">
-    <h2>Punch List Information</h2>
+    .punch-hero,
+    .punch-card {
+        background: #ffffff;
+        border: 1px solid #dce5f2;
+        border-radius: 13px;
+        margin-bottom: 18px;
+    }
 
-    <div class="detail-grid">
-        <div>
-            <strong>Punch List Number</strong>
-            <p>{{ punch_list.punch_list_number }}</p>
-        </div>
+    .punch-hero {
+        padding: 25px 28px;
+    }
 
-        <div>
-            <strong>Internal RFI Reference</strong>
-            <p>{{ rfi.internal_reference }}</p>
-        </div>
+    .punch-card {
+        padding: 22px 24px;
+    }
 
-        <div>
-            <strong>Contractor RFI Number</strong>
-            <p>{{ rfi.rfi_number }}</p>
-        </div>
+    .punch-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 20px;
+    }
 
-        <div>
-            <strong>Inspection Number</strong>
-            <p>#{{ inspection.inspection_number }}</p>
-        </div>
+    .punch-eyebrow {
+        color: #527095;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: .08em;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+    }
 
-        <div>
-            <strong>Inspection Date</strong>
-            <p>{{ inspection.inspection_date|date:"d M Y" }}</p>
-        </div>
+    .punch-title {
+        font-size: 23px;
+        font-weight: 750;
+        color: #142943;
+        margin: 0 0 7px;
+    }
 
-        <div>
-            <strong>Date Created</strong>
-            <p>{{ punch_list.date_created|date:"d M Y" }}</p>
-        </div>
+    .punch-subtitle,
+    .punch-description {
+        color: #617994;
+        font-size: 12px;
+        line-height: 1.7;
+        margin: 0;
+    }
 
-        <div>
-            <strong>Status</strong>
-            <p>{{ punch_list.get_status_display }}</p>
-        </div>
+    .punch-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 9px 15px;
+        border-radius: 7px;
+        border: 1px solid #d0dceb;
+        background: #ffffff;
+        color: #142943;
+        font-size: 11px;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+        transition: .2s ease;
+    }
 
-        {% if punch_list.signed_at %}
-        <div>
-            <strong>Signed Copy Uploaded</strong>
-            <p>{{ punch_list.signed_at|date:"d M Y, H:i" }}</p>
-        </div>
-        {% endif %}
-    </div>
+    .punch-btn:hover {
+        background: #f1f6ff;
+        border-color: #2563eb;
+    }
 
-    {% if punch_list.remarks %}
-    <div>
-        <strong>Remarks</strong>
-        <p>{{ punch_list.remarks }}</p>
-    </div>
-    {% endif %}
-</div>
+    .punch-btn-primary {
+        background: #2455df;
+        border-color: #2455df;
+        color: #ffffff;
+    }
 
-<div class="card">
-    <h2>Client-Signed Punch List</h2>
+    .punch-btn-primary:hover {
+        background: #1945c4;
+        color: #ffffff;
+    }
 
-    <p>
-        After the client signs the punch list, upload the scanned or
-        electronic copy here. Accepted formats: PDF, JPG, JPEG and PNG.
-        Maximum file size: 10 MB.
-    </p>
+    .punch-section-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 5px;
+    }
 
-    {% if punch_list.status == "DRAFT" %}
-        {% if user.profile.role == "ADMIN" or user.profile.role == "SUPERVISOR" or user.profile.role == "INSPECTOR" %}
-        <form
-            method="post"
-            action="{% url 'punch_list_signed_upload' punch_list_id=punch_list.id %}"
-            enctype="multipart/form-data"
-        >
-            {% csrf_token %}
+    .punch-section-heading h2 {
+        font-size: 14px;
+        font-weight: 750;
+        color: #142943;
+        margin: 0;
+    }
 
-            <div class="form-group">
-                <label for="signed_file">Signed Punch List</label>
-                <input
-                    type="file"
-                    id="signed_file"
-                    name="signed_file"
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    required
-                >
+    .punch-count {
+        background: #edf3ff;
+        color: #2455df;
+        border-radius: 6px;
+        padding: 5px 9px;
+        font-size: 11px;
+        font-weight: 700;
+    }
+
+    .punch-info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 17px;
+    }
+
+    .punch-info-item {
+        background: #fbfcfe;
+        border: 1px solid #dfe7f2;
+        border-radius: 9px;
+        padding: 13px 14px;
+        min-width: 0;
+    }
+
+    .punch-info-label {
+        display: block;
+        color: #617994;
+        font-size: 9px;
+        font-weight: 750;
+        letter-spacing: .06em;
+        text-transform: uppercase;
+        margin-bottom: 7px;
+    }
+
+    .punch-info-value {
+        color: #142943;
+        font-size: 12px;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+        margin: 0;
+    }
+
+    .punch-status {
+        display: inline-flex;
+        align-items: center;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 10px;
+        font-weight: 750;
+        background: #edf3ff;
+        color: #2455df;
+        border: 1px solid #d6e4ff;
+    }
+
+    .punch-status-draft {
+        background: #fff8e8;
+        color: #a66b00;
+        border-color: #f5dfaa;
+    }
+
+    .punch-remarks {
+        margin-top: 16px;
+        padding: 13px 15px;
+        border-left: 3px solid #2563eb;
+        background: #f5f8ff;
+        border-radius: 6px;
+        font-size: 12px;
+        line-height: 1.7;
+    }
+
+    .punch-upload-panel {
+        margin-top: 18px;
+        padding: 19px;
+        border: 1px solid #dce5f2;
+        border-radius: 10px;
+        background: #fbfcff;
+    }
+
+    .punch-upload-icon {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #edf3ff;
+        color: #2455df;
+        border-radius: 9px;
+        font-size: 20px;
+        margin-bottom: 12px;
+    }
+
+    .punch-field {
+        margin-top: 16px;
+    }
+
+    .punch-field label {
+        display: block;
+        color: #294361;
+        font-size: 11px;
+        font-weight: 700;
+        margin-bottom: 7px;
+    }
+
+    .punch-field input {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 11px 12px;
+        border: 1px solid #d0dceb;
+        border-radius: 7px;
+        background: #ffffff;
+        color: #142943;
+        font-size: 12px;
+    }
+
+    .punch-field input:focus {
+        outline: none;
+        border-color: #2563eb;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, .10);
+    }
+
+    .punch-upload-actions {
+        margin-top: 17px;
+    }
+
+    .punch-table-wrap {
+        width: 100%;
+        overflow-x: auto;
+        margin-top: 17px;
+        border: 1px solid #dce5f2;
+        border-radius: 9px;
+    }
+
+    .punch-table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 720px;
+    }
+
+    .punch-table th {
+        background: #f7f9fc;
+        color: #526c8d;
+        font-size: 9px;
+        font-weight: 750;
+        text-transform: uppercase;
+        letter-spacing: .04em;
+        text-align: left;
+        padding: 13px 12px;
+        border-bottom: 1px solid #dce5f2;
+        white-space: nowrap;
+    }
+
+    .punch-table td {
+        padding: 14px 12px;
+        color: #294361;
+        font-size: 11px;
+        border-bottom: 1px solid #e8eef5;
+        vertical-align: middle;
+    }
+
+    .punch-table tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .punch-table tbody tr:hover {
+        background: #f9fbff;
+    }
+
+    .punch-table td:first-child {
+        color: #142943;
+        font-weight: 700;
+    }
+
+    .punch-document-link {
+        color: #2455df;
+        font-size: 11px;
+        font-weight: 700;
+        text-decoration: none;
+    }
+
+    .punch-document-link:hover {
+        text-decoration: underline;
+    }
+
+    .punch-empty {
+        padding: 28px 15px;
+        text-align: center;
+        background: #fbfcfe;
+        border: 1px dashed #d3deec;
+        border-radius: 9px;
+        margin-top: 17px;
+    }
+
+    .punch-empty strong {
+        display: block;
+        font-size: 12px;
+        color: #294361;
+        margin-bottom: 6px;
+    }
+
+    .punch-empty p {
+        font-size: 11px;
+        color: #71849b;
+        margin: 0;
+    }
+
+    .punch-bottom-action {
+        margin-top: 20px;
+    }
+
+    @media (max-width: 700px) {
+        .punch-page {
+            margin-top: 20px;
+            padding: 0 12px 25px;
+        }
+
+        .punch-hero,
+        .punch-card {
+            padding: 18px 15px;
+        }
+
+        .punch-heading {
+            flex-direction: column;
+        }
+
+        .punch-info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .punch-title {
+            font-size: 20px;
+        }
+
+        .punch-heading > div:last-child {
+            width: 100%;
+        }
+    }
+</style>
+
+<div class="punch-page">
+
+    <!-- PAGE HEADER -->
+    <div class="punch-hero">
+        <div class="punch-heading">
+            <div>
+                <div class="punch-eyebrow">QC RFI Management System</div>
+                <h1 class="punch-title">
+                    Punch List {{ punch_list.punch_list_number }}
+                </h1>
+                <p class="punch-subtitle">
+                    Outstanding QC items and verification status.
+                </p>
+
+                <div style="margin-top:13px;">
+                    <span class="punch-status {% if punch_list.status == 'DRAFT' %}punch-status-draft{% endif %}">
+                        {{ punch_list.get_status_display }}
+                    </span>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label for="description">Document Description</label>
-                <input
-                    type="text"
-                    id="description"
-                    name="description"
-                    value="Client-signed punch list"
-                    maxlength="255"
-                >
+            <div>
+                <a href="{% url 'rfi_detail' rfi_id=rfi.id %}"
+                   class="punch-btn">
+                    &larr; Back to RFI
+                </a>
             </div>
+        </div>
+    </div>
 
-            <button type="submit" class="btn btn-primary">
-                Upload Signed Copy
-            </button>
-        </form>
-        {% endif %}
-    {% else %}
-        <p>
-            The punch list is currently
-            <strong>{{ punch_list.get_status_display }}</strong>.
+    <!-- PUNCH LIST OVERVIEW -->
+    <section class="punch-card">
+        <div class="punch-section-heading">
+            <h2>Punch List Overview</h2>
+        </div>
+        <p class="punch-description">
+            Identification and inspection details associated with this punch list.
         </p>
-    {% endif %}
-   
-    {% if signed_documents %}
-        <div class="table-container">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Document</th>
-                        <th>Description</th>
-                        <th>Uploaded By</th>
-                        <th>Upload Date</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for document in signed_documents %}
-                        <tr>
-                            <td>{{ document.file.name }}</td>
-                            <td>{{ document.description|default:"Client-signed punch list" }}</td>
-                            <td>
-                                {{ document.uploaded_by.get_full_name|default:document.uploaded_by.username }}
-                            </td>
-                            <td>{{ document.uploaded_at|date:"d M Y, H:i" }}</td>
-                            <td>
-                                <a href="{{ document.file.url }}" target="_blank" rel="noopener">
-                                    View / Download
-                                </a>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+
+        <div class="punch-info-grid">
+
+            <div class="punch-info-item">
+                <span class="punch-info-label">Punch List Number</span>
+                <p class="punch-info-value">
+                    {{ punch_list.punch_list_number }}
+                </p>
+            </div>
+
+            <div class="punch-info-item">
+                <span class="punch-info-label">Internal RFI Reference</span>
+                <p class="punch-info-value">
+                    {{ rfi.internal_reference }}
+                </p>
+            </div>
+
+            <div class="punch-info-item">
+                <span class="punch-info-label">Contractor RFI Number</span>
+                <p class="punch-info-value">
+                    {{ rfi.rfi_number }}
+                </p>
+            </div>
+
+            <div class="punch-info-item">
+                <span class="punch-info-label">Inspection Number</span>
+                <p class="punch-info-value">
+                    #{{ inspection.inspection_number }}
+                </p>
+            </div>
+
+            <div class="punch-info-item">
+                <span class="punch-info-label">Inspection Date</span>
+                <p class="punch-info-value">
+                    {{ inspection.inspection_date|date:"d M Y" }}
+                </p>
+            </div>
+
+            <div class="punch-info-item">
+                <span class="punch-info-label">Date Created</span>
+                <p class="punch-info-value">
+                    {{ punch_list.date_created|date:"d M Y" }}
+                </p>
+            </div>
+
         </div>
-    {% else %}
-        <p>No signed punch-list document has been uploaded yet.</p>
-    {% endif %}
 
-</div>
-
-<div class="card">
-    <div class="page-header">
-        <div>
-            <h2>Punch Items</h2>
-            <p>Each outstanding item is tracked separately.</p>
-        </div>
-
-        {% if can_add_items %}
-        <a
-            href="{% url 'punch_item_create' punch_list_id=punch_list.id %}"
-            class="btn btn-primary"
-        >
-            Add Punch Item
-        </a>
+        {% if punch_list.remarks %}
+            <div class="punch-remarks">
+                <strong>Remarks</strong>
+                <p style="margin:6px 0 0;">
+                    {{ punch_list.remarks }}
+                </p>
+            </div>
         {% endif %}
+    </section>
+
+    <!-- CLIENT-SIGNED PUNCH LIST -->
+    <section class="punch-card">
+        <div class="punch-section-heading">
+            <h2>Client-Signed Punch List</h2>
+            <span class="punch-count">Documents</span>
+        </div>
+
+        <p class="punch-description">
+            Upload the scanned or electronic copy after the client signs the punch list.
+            Accepted formats: PDF, JPG, JPEG and PNG. Maximum file size: 10 MB.
+        </p>
+
+        {% if punch_list.status == "DRAFT" %}
+            {% if user.profile.role == "ADMIN" or user.profile.role == "SUPERVISOR" or user.profile.role == "INSPECTOR" %}
+
+                <div class="punch-upload-panel">
+                    <div class="punch-upload-icon">&#128196;</div>
+
+                    <strong style="font-size:12px;color:#142943;">
+                        Upload signed document
+                    </strong>
+
+                    <p class="punch-description" style="margin-top:5px;">
+                        Select the client-signed punch list from your device.
+                    </p>
+
+                    <form
+                        method="post"
+                        action="{% url 'punch_list_signed_upload' punch_list_id=punch_list.id %}"
+                        enctype="multipart/form-data"
+                    >
+                        {% csrf_token %}
+
+                        <div class="punch-field">
+                            <label for="signed_file">Signed Punch List</label>
+                            <input
+                                type="file"
+                                id="signed_file"
+                                name="signed_file"
+                                accept=".pdf,.jpg,.jpeg,.png"
+                                required
+                            >
+                        </div>
+
+                        <div class="punch-field">
+                            <label for="description">Document Description</label>
+                            <input
+                                type="text"
+                                id="description"
+                                name="description"
+                                value="Client-signed punch list"
+                                maxlength="255"
+                            >
+                        </div>
+
+                        <div class="punch-upload-actions">
+                            <button type="submit"
+                                    class="punch-btn punch-btn-primary">
+                                Upload Signed Copy
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+            {% endif %}
+        {% else %}
+            <div class="punch-remarks">
+                The punch list is currently
+                <strong>{{ punch_list.get_status_display }}</strong>.
+            </div>
+        {% endif %}
+
+        {% if signed_documents %}
+
+            <div class="punch-table-wrap">
+                <table class="punch-table">
+                    <thead>
+                        <tr>
+                            <th>Document</th>
+                            <th>Description</th>
+                            <th>Uploaded By</th>
+                            <th>Upload Date</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for document in signed_documents %}
+                            <tr>
+                                <td>{{ document.file.name }}</td>
+
+                                <td>
+                                    {{ document.description|default:"Client-signed punch list" }}
+                                </td>
+
+                                <td>
+                                    {{ document.uploaded_by.get_full_name|default:document.uploaded_by.username }}
+                                </td>
+
+                                <td>
+                                    {{ document.uploaded_at|date:"d M Y, H:i" }}
+                                </td>
+
+                                <td>
+                                    <a href="{{ document.file.url }}"
+                                       target="_blank"
+                                       rel="noopener"
+                                       class="punch-document-link">
+                                        View / Download
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        {% else %}
+
+            <div class="punch-empty">
+                <strong>No signed document uploaded</strong>
+                <p>
+                    The client-signed punch list will appear here after upload.
+                </p>
+            </div>
+
+        {% endif %}
+    </section>
+
+    <!-- PUNCH ITEMS -->
+    <section class="punch-card">
+
+        <div class="punch-section-heading">
+            <div>
+                <h2>Punch Items</h2>
+                <p class="punch-description" style="margin-top:5px;">
+                    Each outstanding QC item is tracked separately through its close-out process.
+                </p>
+            </div>
+
+            {% if can_add_items %}
+                <a href="{% url 'punch_item_create' punch_list_id=punch_list.id %}"
+                   class="punch-btn punch-btn-primary">
+                    + Add Punch Item
+                </a>
+            {% endif %}
+        </div>
+
+        {% if items %}
+
+            <div class="punch-table-wrap">
+                <table class="punch-table">
+                    <thead>
+                        <tr>
+                            <th>Item No.</th>
+                            <th>Item Tag</th>
+                            <th>Description</th>
+                            <th>Category</th>
+                            <th>Responsible Party</th>
+                            <th>Target Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for item in items %}
+                            <tr>
+                                <td>{{ item.item_number }}</td>
+
+                                <td>{{ item.item_tag|default:"—" }}</td>
+
+                                <td>{{ item.description }}</td>
+
+                                <td>{{ item.get_category_display }}</td>
+
+                                <td>
+                                    {{ item.responsible_party|default:"—" }}
+                                </td>
+
+                                <td>
+                                    {% if item.target_date %}
+                                        {{ item.target_date|date:"d M Y" }}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+
+                                <td>{{ item.get_status_display }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+        {% else %}
+
+            <div class="punch-empty">
+                <strong>No punch items added yet</strong>
+                <p>
+                    Outstanding inspection items will appear here once recorded.
+                </p>
+            </div>
+
+        {% endif %}
+
+    </section>
+
+    <div class="punch-bottom-action">
+        <a href="{% url 'rfi_detail' rfi_id=rfi.id %}"
+           class="punch-btn">
+            &larr; Back to RFI Details
+        </a>
     </div>
 
-    {% if items %}
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>Item No.</th>
-                    <th>Item Tag</th>
-                    <th>Description</th>
-                    <th>Category</th>
-                    <th>Responsible Party</th>
-                    <th>Target Date</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-
-            <tbody>
-                {% for item in items %}
-                <tr>
-                    <td>{{ item.item_number }}</td>
-                    <td>{{ item.item_tag|default:"—" }}</td>
-                    <td>{{ item.description }}</td>
-                    <td>{{ item.get_category_display }}</td>
-                    <td>{{ item.responsible_party|default:"—" }}</td>
-                    <td>
-                        {% if item.target_date %}
-                            {{ item.target_date|date:"d M Y" }}
-                        {% else %}
-                            —
-                        {% endif %}
-                    </td>
-                    <td>{{ item.get_status_display }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-    {% else %}
-        <p>No punch items have been added yet.</p>
-    {% endif %}
 </div>
+
 {% endblock %}

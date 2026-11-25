@@ -1822,6 +1822,7 @@ def rfi_return_to_supervisor_view(request, rfi_id):
         {"rfi": rfi, "form": form},
     )
 
+
 @login_required
 def inspection_detail_view(request, inspection_id):
     """
@@ -1890,7 +1891,6 @@ def inspection_detail_view(request, inspection_id):
         if form.is_valid():
 
             inspection = form.save()
-
             result = inspection.overall_result
 
             if result == Inspection.ExecutionResult.ACCEPTED:
@@ -1898,10 +1898,7 @@ def inspection_detail_view(request, inspection_id):
                 inspection.rfi.overall_result = (
                     RFI.OverallResult.COMPLETED
                 )
-
-                inspection.rfi.status = (
-                    RFI.Status.CLOSED
-                )
+                inspection.rfi.status = RFI.Status.CLOSED
 
                 inspection.rfi.save(
                     update_fields=[
@@ -1922,30 +1919,56 @@ def inspection_detail_view(request, inspection_id):
 
             elif result == Inspection.ExecutionResult.PARTIALLY_ACCEPTED:
 
-                inspection.rfi.overall_result = (
-                    RFI.OverallResult.COMPLETED_WITH_PUNCH
-                )
+                with transaction.atomic():
 
-                inspection.rfi.status = (
-                    RFI.Status.AWAITING_PUNCH
-                )
+                    inspection.rfi.overall_result = (
+                        RFI.OverallResult.COMPLETED_WITH_PUNCH
+                    )
+                    inspection.rfi.status = (
+                        RFI.Status.AWAITING_PUNCH
+                    )
 
-                inspection.rfi.save(
-                    update_fields=[
-                        "overall_result",
-                        "status",
-                        "updated_at",
-                    ]
-                )
+                    inspection.rfi.save(
+                        update_fields=[
+                            "overall_result",
+                            "status",
+                            "updated_at",
+                        ]
+                    )
+
+                    # Check whether a punch list already exists.
+                    punch_list = (
+                        PunchList.objects
+                        .filter(inspection=inspection)
+                        .first()
+                    )
+
+                    # Automatically create a draft punch list
+                    # if one does not already exist.
+                    if punch_list is None:
+                        punch_list = PunchList(
+                            rfi=inspection.rfi,
+                            inspection=inspection,
+                            date_created=timezone.localdate(),
+                            status=PunchList.Status.DRAFT,
+                            remarks="",
+                            created_by=request.user,
+                        )
+                        punch_list.save()
 
                 messages.success(
                     request,
                     (
                         f"Inspection #{inspection.inspection_number} "
-                        f"for RFI {inspection.rfi.internal_reference} "
                         "was partially accepted. "
-                        "The RFI is awaiting punch-list processing."
+                        f"Punch list {punch_list.punch_list_number} "
+                        "has been created."
                     ),
+                )
+
+                return redirect(
+                    "punch_list_detail",
+                    punch_list_id=punch_list.id,
                 )
 
             elif result == Inspection.ExecutionResult.REJECTED:
@@ -1953,10 +1976,7 @@ def inspection_detail_view(request, inspection_id):
                 inspection.rfi.overall_result = (
                     RFI.OverallResult.REJECTED
                 )
-
-                inspection.rfi.status = (
-                    RFI.Status.FOLLOW_UP
-                )
+                inspection.rfi.status = RFI.Status.FOLLOW_UP
 
                 inspection.rfi.save(
                     update_fields=[
@@ -1980,10 +2000,7 @@ def inspection_detail_view(request, inspection_id):
                 inspection.rfi.overall_result = (
                     RFI.OverallResult.PENDING
                 )
-
-                inspection.rfi.status = (
-                    RFI.Status.SCHEDULED
-                )
+                inspection.rfi.status = RFI.Status.SCHEDULED
 
                 inspection.rfi.save(
                     update_fields=[
@@ -2008,10 +2025,7 @@ def inspection_detail_view(request, inspection_id):
                 inspection.rfi.overall_result = (
                     RFI.OverallResult.RETURNED
                 )
-
-                inspection.rfi.status = (
-                    RFI.Status.RETURNED
-                )
+                inspection.rfi.status = RFI.Status.RETURNED
 
                 inspection.rfi.save(
                     update_fields=[
@@ -2050,6 +2064,7 @@ def inspection_detail_view(request, inspection_id):
             "form": form,
         },
     )
+
 
 @login_required
 def punch_list_create_view(request, inspection_id):
