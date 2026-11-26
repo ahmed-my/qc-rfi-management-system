@@ -27,6 +27,7 @@ from .forms import (
     InspectionForm,
     StartInspectionForm,
     PunchListCreateForm,
+    PunchItemCreateForm,
     RFIRenewalForm,
     ReturnToSupervisorForm,
     ClientSignedRFIForm,
