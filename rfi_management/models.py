@@ -700,6 +700,14 @@ class PunchItem(models.Model):
         B = "B", "Category B - Before RFSU"
         C = "C", "Category C - Before Completion"
 
+    class ActionCode(models.TextChoices):
+        CON = "CON", "Construction Contractor"
+        EN = "EN", "Engineering"
+        V = "V", "Vendor"
+        CO = "CO", "Commissioning"
+        CPY = "CPY", "Company"
+        D = "D", "Others (Specified)"
+
     class Status(models.TextChoices):
         OPEN = "OPEN", "Open"
         IN_PROGRESS = "IN_PROGRESS", "In Progress"
@@ -724,6 +732,13 @@ class PunchItem(models.Model):
     category = models.CharField(
         max_length=1,
         choices=Category.choices
+    )
+
+    action_code = models.CharField(
+        max_length=3,
+        choices=ActionCode.choices,
+        blank=True,
+        default=""
     )
 
     action = models.TextField(

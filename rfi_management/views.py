@@ -25,6 +25,7 @@ from .forms import (
     RFIRegistrationForm,
     RFIAssignmentForm,
     InspectionForm,
+    ItemResultForm,
     StartInspectionForm,
     PunchListCreateForm,
     PunchItemCreateForm,
@@ -38,6 +39,7 @@ from .models import (
     UserProfile,
     Assignment,
     Inspection,
+    ItemResult,
     PunchList,
     PunchItem,
     RFIHistory,
@@ -1882,6 +1884,47 @@ def inspection_detail_view(request, inspection_id):
             rfi_id=inspection.rfi.id,
         )
 
+    # Load all items belonging to this RFI.
+    rfi_items = inspection.rfi.items.all().order_by("item_number")
+
+    # Load any results already recorded for this inspection.
+    existing_results = {
+        result.rfi_item_id: result
+        for result in inspection.item_results.all()
+    }
+
+    # Prepare one Done/Failed form for each RFI item.
+    item_forms = []
+
+    for item in rfi_items:
+        existing_result = existing_results.get(item.id)
+
+        initial = {
+            "done_code": "",
+            "failed_code": "",
+            "remarks": "",
+        }
+
+        if existing_result:
+            if existing_result.result_type == ItemResult.ResultType.DONE:
+                initial["done_code"] = existing_result.result_code
+
+            elif existing_result.result_type == ItemResult.ResultType.FAILED:
+                initial["failed_code"] = existing_result.result_code
+
+            initial["remarks"] = existing_result.remarks
+
+        item_form = ItemResultForm(
+            request.POST if request.method == "POST" else None,
+            prefix=f"item_{item.id}",
+            initial=initial,
+        )
+
+        item_forms.append({
+            "item": item,
+            "form": item_form,
+        })
+
     if request.method == "POST":
 
         form = InspectionForm(
@@ -1889,9 +1932,56 @@ def inspection_detail_view(request, inspection_id):
             instance=inspection,
         )
 
-        if form.is_valid():
 
-            inspection = form.save()
+        main_form_valid = form.is_valid()
+
+        item_forms_valid = True
+
+        for item_form_data in item_forms:
+            if not item_form_data["form"].is_valid():
+                item_forms_valid = False
+        if main_form_valid and item_forms_valid:
+
+            with transaction.atomic():
+
+                inspection = form.save()
+
+                for item_form_data in item_forms:
+                    item = item_form_data["item"]
+                    item_form = item_form_data["form"]
+
+                    done_code = item_form.cleaned_data["done_code"]
+                    failed_code = item_form.cleaned_data["failed_code"]
+                    remarks = item_form.cleaned_data["remarks"]
+
+                    if done_code:
+                        ItemResult.objects.update_or_create(
+                            inspection=inspection,
+                            rfi_item=item,
+                            defaults={
+                                "result_type": ItemResult.ResultType.DONE,
+                                "result_code": done_code,
+                                "remarks": remarks,
+                            },
+                        )
+
+                    elif failed_code:
+                        ItemResult.objects.update_or_create(
+                            inspection=inspection,
+                            rfi_item=item,
+                            defaults={
+                                "result_type": ItemResult.ResultType.FAILED,
+                                "result_code": failed_code,
+                                "remarks": remarks,
+                            },
+                        )
+
+                    else:
+                        ItemResult.objects.filter(
+                            inspection=inspection,
+                            rfi_item=item,
+                        ).delete()
+
             result = inspection.overall_result
 
             if result == Inspection.ExecutionResult.ACCEPTED:
@@ -2063,6 +2153,7 @@ def inspection_detail_view(request, inspection_id):
             "inspection": inspection,
             "rfi": inspection.rfi,
             "form": form,
+            "item_forms": item_forms,
         },
     )
 
@@ -2357,6 +2448,103 @@ def punch_item_create_view(request, punch_list_id):
         {
             "form": form,
             "punch_list": punch_list,
+        },
+    )
+
+
+@login_required
+def punch_item_edit_view(request, item_id):
+    item = get_object_or_404(
+        PunchItem.objects.select_related(
+            "punch_list__rfi",
+            "punch_list__inspection",
+        ),
+        id=item_id,
+    )
+
+    punch_list = item.punch_list
+    profile = getattr(request.user, "profile", None)
+
+    if profile is None:
+        messages.error(
+            request,
+            "Your account does not have a QC profile."
+        )
+        return redirect("login")
+
+    if profile.role not in [
+        UserProfile.Role.ADMIN,
+        UserProfile.Role.SUPERVISOR,
+        UserProfile.Role.INSPECTOR,
+    ]:
+        messages.error(
+            request,
+            "You do not have permission to edit punch items."
+        )
+        return redirect("dashboard")
+
+    if profile.role == UserProfile.Role.INSPECTOR:
+        is_authorized_inspector = (
+            punch_list.inspection.inspector_id == request.user.id
+            and Assignment.objects.filter(
+                rfi=punch_list.rfi,
+                inspector=request.user,
+                unassigned_at__isnull=True,
+            ).exists()
+        )
+
+        if not is_authorized_inspector:
+            messages.error(
+                request,
+                "You are not authorized to modify this punch list."
+            )
+            return redirect("inspector_rfi_list")
+
+    if punch_list.status != PunchList.Status.DRAFT:
+        messages.error(
+            request,
+            "Punch items can only be edited while the punch list is in Draft status."
+        )
+        return redirect(
+            "punch_list_detail",
+            punch_list_id=punch_list.id,
+        )
+
+    if request.method == "POST":
+        form = PunchItemCreateForm(
+            request.POST,
+            instance=item,
+        )
+
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    form.save()
+            except IntegrityError:
+                form.add_error(
+                    "item_number",
+                    "This item number already exists on this punch list."
+                )
+            else:
+                messages.success(
+                    request,
+                    f"Punch Item {item.item_number} updated successfully."
+                )
+                return redirect(
+                    "punch_list_detail",
+                    punch_list_id=punch_list.id,
+                )
+
+    else:
+        form = PunchItemCreateForm(instance=item)
+
+    return render(
+        request,
+        "rfi_management/punch_item_form.html",
+        {
+            "form": form,
+            "punch_list": punch_list,
+            "is_edit": True,
         },
     )
 

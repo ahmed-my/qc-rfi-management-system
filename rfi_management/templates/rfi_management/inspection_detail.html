@@ -466,6 +466,72 @@
                 </div>
             {% endif %}
 
+            <!-- Subject to Inspect -->
+            <div class="mb-4">
+                <h4 class="mb-3">Subject to Inspect</h4>
+
+                {% if item_forms %}
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover align-middle">
+                            <thead>
+                                <tr>
+                                    <th>S/N</th>
+                                    <th>Item Identification</th>
+                                    <th>Description</th>
+                                    <th>Done (*)</th>
+                                    <th>Failed (**)</th>
+                                    <th>Remarks</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                {% for item_form in item_forms %}
+                                    <tr>
+                                        <td>{{ item_form.item.item_number }}</td>
+
+                                        <td>
+                                            {{ item_form.item.item_code|default:"—" }}
+                                        </td>
+
+                                        <td>
+                                            {{ item_form.item.description|default:"—" }}
+                                        </td>
+
+                                        <td>
+                                            {{ item_form.form.done_code }}
+                                            {{ item_form.form.done_code.errors }}
+                                        </td>
+
+                                        <td>
+                                            {{ item_form.form.failed_code }}
+                                            {{ item_form.form.failed_code.errors }}
+                                        </td>
+
+                                        <td>
+                                            {{ item_form.form.remarks }}
+                                            {{ item_form.form.remarks.errors }}
+                                        </td>
+                                    </tr>
+
+                                    {% if item_form.form.non_field_errors %}
+                                        <tr>
+                                            <td colspan="6">
+                                                <div class="text-danger">
+                                                    {{ item_form.form.non_field_errors }}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <p class="text-muted">
+                        No inspection items have been registered for this RFI.
+                    </p>
+                {% endif %}
+            </div>
 
             <div class="inspection-form-grid">
 

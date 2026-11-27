@@ -17,6 +17,7 @@ from .views import (
     inspection_detail_view,
     punch_list_detail_view,
     punch_item_create_view,
+    punch_item_edit_view,
     rfi_reassign_view,
     rfi_delete_view,
     punch_list_signed_upload_view,
@@ -121,6 +122,12 @@ urlpatterns = [
         "punch-lists/<int:punch_list_id>/items/add/",
         punch_item_create_view,
         name="punch_item_create",
+    ),
+
+    path(
+        "punch-items/<int:item_id>/edit/",
+        punch_item_edit_view,
+        name="punch_item_edit",
     ),
 
     path(

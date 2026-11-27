@@ -598,9 +598,11 @@
                             <th>Item Tag</th>
                             <th>Description</th>
                             <th>Category</th>
+                            <th>ACTION</th>
                             <th>Responsible Party</th>
                             <th>Target Date</th>
                             <th>Status</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
 
@@ -614,6 +616,7 @@
                                 <td>{{ item.description }}</td>
 
                                 <td>{{ item.get_category_display }}</td>
+                                <td>{{ item.get_action_code_display|default:"—" }}</td>
 
                                 <td>
                                     {{ item.responsible_party|default:"—" }}
@@ -628,6 +631,16 @@
                                 </td>
 
                                 <td>{{ item.get_status_display }}</td>
+                                <td>
+                                    {% if can_add_items %}
+                                        <a href="{% url 'punch_item_edit' item_id=item.id %}"
+                                        class="punch-document-link">
+                                            Edit
+                                        </a>
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
                             </tr>
                         {% endfor %}
                     </tbody>

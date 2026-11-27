@@ -8,6 +8,7 @@ from .models import (
     UserProfile,
     Assignment,
     Inspection,
+    ItemResult,
     PunchList,
     PunchItem,
     ClientSignedRFI,
@@ -567,12 +568,64 @@ class InspectionForm(forms.ModelForm):
 
         self.fields["inspection_date"].required = True
         self.fields["start_time"].required = True
-        self.fields["overall_result"].required = True
+        self.fields["overall_result"].required = False
         self.fields["remarks"].required = False
 
         if self.instance and self.instance.pk:
             self.fields["inspection_date"].disabled = True
             self.fields["start_time"].disabled = True
+
+
+class ItemResultForm(forms.Form):
+
+    done_code = forms.ChoiceField(
+        required=False,
+        label="Done (*)",
+        choices=[
+            ("", "Select Done Code"),
+            *ItemResult.DoneCode.choices,
+        ],
+        widget=forms.Select(
+            attrs={"class": "form-control"}
+        ),
+    )
+
+    failed_code = forms.ChoiceField(
+        required=False,
+        label="Failed (**)",
+        choices=[
+            ("", "Select Failed Code"),
+            *ItemResult.FailedCode.choices,
+        ],
+        widget=forms.Select(
+            attrs={"class": "form-control"}
+        ),
+    )
+
+    remarks = forms.CharField(
+        required=False,
+        label="Remarks",
+        widget=forms.Textarea(
+            attrs={
+                "class": "form-control",
+                "rows": 2,
+                "placeholder": "Optional remarks",
+            }
+        ),
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        done_code = cleaned_data.get("done_code")
+        failed_code = cleaned_data.get("failed_code")
+
+        if done_code and failed_code:
+            raise forms.ValidationError(
+                "Select either a Done code or a Failed code, not both."
+            )
+
+        return cleaned_data
 
 
 class PunchListCreateForm(forms.ModelForm):
@@ -610,6 +663,7 @@ class PunchItemCreateForm(forms.ModelForm):
             "item_tag",
             "description",
             "category",
+            "action_code",
             "action",
             "responsible_party",
             "target_date",
@@ -633,6 +687,9 @@ class PunchItemCreateForm(forms.ModelForm):
                 }
             ),
             "category": forms.Select(
+                attrs={"class": "form-control"}
+            ),
+            "action_code": forms.Select(
                 attrs={"class": "form-control"}
             ),
             "action": forms.Textarea(
