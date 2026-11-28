@@ -288,6 +288,9 @@ class RFIRegistrationForm(forms.ModelForm):
         fields = [
             "rfi_number",
             "inspection_activity",
+            "itp_document",
+            "form_code",
+            "number_of_inspection_items",
             "date_received",
             "original_planned_start",
             "original_planned_end",
@@ -306,6 +309,29 @@ class RFIRegistrationForm(forms.ModelForm):
                     "class": "form-control",
                     "placeholder": "Describe the inspection activity",
                     "rows": 3,
+                }
+            ),
+
+            "itp_document": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Enter document code (optional)",
+                }
+            ),
+
+            "form_code": forms.TextInput(
+                attrs={
+                    "class": "form-control",
+                    "placeholder": "Enter form code (optional)",
+                }
+            ),
+
+            "number_of_inspection_items": forms.NumberInput(
+                attrs={
+                    "class": "form-control",
+                    "min": 1,
+                    "step": 1,
+                    "placeholder": "Enter number of inspection items",
                 }
             ),
 
@@ -336,6 +362,10 @@ class RFIRegistrationForm(forms.ModelForm):
 
         for field_name in self.fields:
             self.fields[field_name].required = True
+
+        self.fields["itp_document"].required = False
+        self.fields["form_code"].required = False
+        self.fields["number_of_inspection_items"].required = False
 
     def clean(self):
         cleaned_data = super().clean()

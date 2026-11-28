@@ -190,6 +190,11 @@ class RFI(models.Model):
         blank=True
     )
 
+    number_of_inspection_items = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+    )
+
     iwp_code = models.CharField(
         max_length=150,
         blank=True

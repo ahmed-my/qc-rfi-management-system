@@ -667,6 +667,48 @@
 
     </section>
 
+    <!-- =========================================================
+        3. DOCUMENT REFERENCES
+        ========================================================= -->
+
+    <section class="rfi-section">
+
+        <div class="rfi-section-header">
+            <div>
+                <h2>Document References</h2>
+                <p class="rfi-section-description">
+                    Document identification and inspection item information
+                    recorded during RFI registration.
+                </p>
+            </div>
+        </div>
+
+        <div class="rfi-info-grid rfi-planning-grid">
+
+            <div class="rfi-info-item">
+                <span class="rfi-info-label">Document Code</span>
+                <span class="rfi-info-value">
+                    {{ rfi.itp_document|default:"—" }}
+                </span>
+            </div>
+
+            <div class="rfi-info-item">
+                <span class="rfi-info-label">Form Code</span>
+                <span class="rfi-info-value">
+                    {{ rfi.form_code|default:"—" }}
+                </span>
+            </div>
+
+            <div class="rfi-info-item">
+                <span class="rfi-info-label">Number of Inspection Items</span>
+                <span class="rfi-info-value">
+                    {{ rfi.number_of_inspection_items|default_if_none:"—" }}
+                </span>
+            </div>
+
+        </div>
+
+    </section>
 
     <!-- =========================================================
         3. INSPECTION ACTIVITY

@@ -260,6 +260,14 @@
         outline-offset: 2px;
     }
 
+    .rfi-create-field small {
+        display: block;
+        margin-top: 6px;
+        color: #8290a4;
+        font-size: .75rem;
+        line-height: 1.5;
+    }
+
     @media (max-width: 700px) {
         .rfi-create-page {
             width: min(100% - 28px, 1120px);
@@ -313,6 +321,94 @@
             transform: none;
         }
     }
+
+
+    /* =========================================================
+    ENHANCED RFI REGISTRATION SECTIONS
+    ========================================================= */
+
+    .rfi-section {
+        margin-bottom: 30px;
+    }
+
+    .rfi-section-heading {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+
+    .rfi-section-number {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        flex: 0 0 34px;
+        border-radius: 10px;
+        background: #eaf1ff;
+        color: #2459d3;
+        font-size: .85rem;
+        font-weight: 800;
+    }
+
+    .rfi-section-heading h3 {
+        margin: 0 0 4px;
+        color: #172b4d;
+        font-size: .95rem;
+        font-weight: 800;
+    }
+
+    .rfi-section-heading p {
+        margin: 0;
+        color: #8290a4;
+        font-size: .78rem;
+        line-height: 1.5;
+    }
+
+    .rfi-document-section {
+        padding: 22px;
+        border: 1px solid #e4eaf3;
+        border-radius: 12px;
+        background: #f8faff;
+    }
+
+    .rfi-document-fields {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 20px;
+    }
+
+    .rfi-create-field small {
+        display: block;
+        margin-top: 7px;
+        color: #8290a4;
+        font-size: .75rem;
+        line-height: 1.5;
+    }
+
+    .rfi-section-divider {
+        height: 1px;
+        margin: 26px 0;
+        background: #e9edf4;
+    }
+
+    @media (max-width: 800px) {
+        .rfi-document-fields {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 550px) {
+        .rfi-document-fields {
+            grid-template-columns: 1fr;
+        }
+
+        .rfi-document-section {
+            padding: 16px;
+        }
+    }
+
 </style>
 {% endblock %}
 
@@ -346,55 +442,132 @@
                 </div>
             {% endif %}
 
-            <div class="rfi-create-fields">
-                <div class="rfi-create-field">
-                    <label for="{{ form.rfi_number.id_for_label }}">RFI Number</label>
-                    {{ form.rfi_number }}
+            <!-- SECTION 01: RFI REGISTRATION DETAILS -->
+            <div class="rfi-section">
 
-                    {% for error in form.rfi_number.errors %}
-                        <div class="rfi-create-field-error">{{ error }}</div>
-                    {% endfor %}
+                <div class="rfi-section-heading">
+                    <div class="rfi-section-number">01</div>
+                    <div>
+                        <h3>RFI Registration Details</h3>
+                        <p>Basic identification and inspection scheduling information.</p>
+                    </div>
                 </div>
 
-                <div class="rfi-create-field">
-                    <label for="{{ form.date_received.id_for_label }}">Date Received</label>
-                    {{ form.date_received }}
+                <div class="rfi-create-fields">
 
-                    {% for error in form.date_received.errors %}
-                        <div class="rfi-create-field-error">{{ error }}</div>
-                    {% endfor %}
-                </div>
+                    <div class="rfi-create-field">
+                        <label for="{{ form.rfi_number.id_for_label }}">RFI Number</label>
+                        {{ form.rfi_number }}
+                        {% for error in form.rfi_number.errors %}
+                            <div class="rfi-create-field-error">{{ error }}</div>
+                        {% endfor %}
+                    </div>
 
-                <div class="rfi-create-field">
-                    <label for="{{ form.original_planned_start.id_for_label }}">
-                        Inspection Planned Start
-                    </label>
-                    {{ form.original_planned_start }}
+                    <div class="rfi-create-field">
+                        <label for="{{ form.date_received.id_for_label }}">Date Received</label>
+                        {{ form.date_received }}
+                        {% for error in form.date_received.errors %}
+                            <div class="rfi-create-field-error">{{ error }}</div>
+                        {% endfor %}
+                    </div>
 
-                    {% for error in form.original_planned_start.errors %}
-                        <div class="rfi-create-field-error">{{ error }}</div>
-                    {% endfor %}
-                </div>
+                    <div class="rfi-create-field">
+                        <label for="{{ form.original_planned_start.id_for_label }}">
+                            Inspection Planned Start
+                        </label>
+                        {{ form.original_planned_start }}
+                        {% for error in form.original_planned_start.errors %}
+                            <div class="rfi-create-field-error">{{ error }}</div>
+                        {% endfor %}
+                    </div>
 
-                <div class="rfi-create-field">
-                    <label for="{{ form.original_planned_end.id_for_label }}">
-                        Inspection Planned End
-                    </label>
-                    {{ form.original_planned_end }}
+                    <div class="rfi-create-field">
+                        <label for="{{ form.original_planned_end.id_for_label }}">
+                            Inspection Planned End
+                        </label>
+                        {{ form.original_planned_end }}
+                        {% for error in form.original_planned_end.errors %}
+                            <div class="rfi-create-field-error">{{ error }}</div>
+                        {% endfor %}
+                    </div>
 
-                    {% for error in form.original_planned_end.errors %}
-                        <div class="rfi-create-field-error">{{ error }}</div>
-                    {% endfor %}
                 </div>
             </div>
 
-            <div class="rfi-create-field rfi-create-field-full">
-                <label for="{{ form.inspection_activity.id_for_label }}">Inspection Activity</label>
-                {{ form.inspection_activity }}
+            <div class="rfi-section-divider"></div>
 
-                {% for error in form.inspection_activity.errors %}
-                    <div class="rfi-create-field-error">{{ error }}</div>
-                {% endfor %}
+            <!-- SECTION 02: DOCUMENT REFERENCES -->
+            <div class="rfi-section">
+
+                <div class="rfi-section-heading">
+                    <div class="rfi-section-number">02</div>
+                    <div>
+                        <h3>Document References</h3>
+                        <p>Optional document identification information from the contractor's RFI.</p>
+                    </div>
+                </div>
+
+                <div class="rfi-document-section">
+                    <div class="rfi-document-fields">
+
+                        <div class="rfi-create-field">
+                            <label for="{{ form.itp_document.id_for_label }}">Document Code</label>
+                            {{ form.itp_document }}
+                            <small>Example: ELE-0306</small>
+                            {% for error in form.itp_document.errors %}
+                                <div class="rfi-create-field-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="rfi-create-field">
+                            <label for="{{ form.form_code.id_for_label }}">Form Code</label>
+                            {{ form.form_code }}
+                            <small>Example: FORM-ELE-604_A</small>
+                            {% for error in form.form_code.errors %}
+                                <div class="rfi-create-field-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="rfi-create-field">
+                            <label for="{{ form.number_of_inspection_items.id_for_label }}">
+                                Number of Inspection Items
+                            </label>
+                            {{ form.number_of_inspection_items }}
+                            <small>Total number of items listed in the RFI.</small>
+                            {% for error in form.number_of_inspection_items.errors %}
+                                <div class="rfi-create-field-error">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="rfi-section-divider"></div>
+
+            <!-- SECTION 03: INSPECTION ACTIVITY -->
+            <div class="rfi-section">
+
+                <div class="rfi-section-heading">
+                    <div class="rfi-section-number">03</div>
+                    <div>
+                        <h3>Inspection Activity</h3>
+                        <p>Describe the inspection work requested by the contractor.</p>
+                    </div>
+                </div>
+
+                <div class="rfi-create-field">
+                    <label for="{{ form.inspection_activity.id_for_label }}">
+                        Inspection Activity
+                    </label>
+                    {{ form.inspection_activity }}
+
+                    {% for error in form.inspection_activity.errors %}
+                        <div class="rfi-create-field-error">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
             </div>
 
             <div class="rfi-create-actions">
