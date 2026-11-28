@@ -2008,7 +2008,11 @@ def inspection_detail_view(request, inspection_id):
                     ),
                 )
 
-            elif result == Inspection.ExecutionResult.PARTIALLY_ACCEPTED:
+            
+            elif result in [
+                Inspection.ExecutionResult.PARTIALLY_ACCEPTED,
+                Inspection.ExecutionResult.ACCEPTED_WITH_PUNCH_LIST,
+            ]:
 
                 with transaction.atomic():
 
@@ -2047,13 +2051,18 @@ def inspection_detail_view(request, inspection_id):
                         )
                         punch_list.save()
 
+                if result == Inspection.ExecutionResult.ACCEPTED_WITH_PUNCH_LIST:
+                    result_message = "was accepted with a punch list."
+                else:
+                    result_message = "was partially accepted."
+
                 messages.success(
                     request,
                     (
                         f"Inspection #{inspection.inspection_number} "
-                        "was partially accepted. "
+                        f"{result_message} "
                         f"Punch list {punch_list.punch_list_number} "
-                        "has been created."
+                        "is available for management."
                     ),
                 )
 
@@ -2157,6 +2166,7 @@ def inspection_detail_view(request, inspection_id):
         },
     )
 
+
 @login_required
 def punch_list_detail_view(request, punch_list_id):
     profile = getattr(request.user, "profile", None)
@@ -2199,6 +2209,18 @@ def punch_list_detail_view(request, punch_list_id):
             )
             return redirect("inspector_rfi_list")
 
+    # Get all signed Punch List documents, newest first.
+    signed_documents = (
+        punch_list.uploaded_documents.filter(
+            document_type=Document.DocumentType.SIGNED_PUNCH_LIST
+        ).order_by("-uploaded_at", "-pk")
+    )
+
+    # Identify the current signed document.
+    current_signed_document = signed_documents.filter(
+        superseded_by__isnull=True
+    ).first()
+
     return render(
         request,
         "rfi_management/punch_list_detail.html",
@@ -2210,11 +2232,12 @@ def punch_list_detail_view(request, punch_list_id):
             "can_add_items": (
                 punch_list.status == PunchList.Status.DRAFT
             ),
-            "signed_documents": punch_list.uploaded_documents.filter(
-                document_type=Document.DocumentType.SIGNED_PUNCH_LIST
-            ),
+            "signed_documents": signed_documents,
+            "current_signed_document": current_signed_document,
         },
     )
+
+
 
 @login_required
 def punch_list_signed_upload_view(request, punch_list_id):
@@ -2267,7 +2290,20 @@ def punch_list_signed_upload_view(request, punch_list_id):
             punch_list_id=punch_list.id,
         )
 
-    if punch_list.status != PunchList.Status.DRAFT:
+    # Identify the current signed document.
+    current_document = (
+        punch_list.uploaded_documents.filter(
+            document_type=Document.DocumentType.SIGNED_PUNCH_LIST,
+            superseded_by__isnull=True,
+        )
+        .order_by("-uploaded_at", "-pk")
+        .first()
+    )
+
+    is_replacement = current_document is not None
+
+    # Initial upload is allowed only while the punch list is Draft.
+    if not is_replacement and punch_list.status != PunchList.Status.DRAFT:
         messages.error(
             request,
             "A signed document can only be uploaded while the punch list is in Draft status."
@@ -2283,6 +2319,20 @@ def punch_list_signed_upload_view(request, punch_list_id):
         messages.error(
             request,
             "Please select the signed punch-list document to upload."
+        )
+        return redirect(
+            "punch_list_detail",
+            punch_list_id=punch_list.id,
+        )
+
+    replacement_reason = request.POST.get(
+        "replacement_reason", ""
+    ).strip()
+
+    if is_replacement and not replacement_reason:
+        messages.error(
+            request,
+            "Please provide a reason for replacing the signed document."
         )
         return redirect(
             "punch_list_detail",
@@ -2315,7 +2365,7 @@ def punch_list_signed_upload_view(request, punch_list_id):
         )
 
     with transaction.atomic():
-        Document.objects.create(
+        new_document = Document.objects.create(
             rfi=punch_list.rfi,
             punch_list=punch_list,
             file=uploaded_file,
@@ -2327,31 +2377,62 @@ def punch_list_signed_upload_view(request, punch_list_id):
             ),
         )
 
-        punch_list.status = PunchList.Status.SIGNED
-        punch_list.signed_at = timezone.now()
-        punch_list.save(
-            update_fields=["status", "signed_at"]
-        )
+        if is_replacement:
+            # Preserve the previous document and link it to the new version.
+            current_document.superseded_by = new_document
+            current_document.replacement_reason = replacement_reason
+            current_document.save(
+                update_fields=[
+                    "superseded_by",
+                    "replacement_reason",
+                ]
+            )
 
-        RFIHistory.objects.create(
-            rfi=punch_list.rfi,
-            user=request.user,
-            action="SIGNED_PUNCH_LIST_UPLOADED",
-            description=(
-                f"Client-signed document uploaded for punch list "
-                f"{punch_list.punch_list_number}."
-            ),
-        )
+            RFIHistory.objects.create(
+                rfi=punch_list.rfi,
+                user=request.user,
+                action="SIGNED_PUNCH_LIST_REPLACED",
+                description=(
+                    f"Signed punch-list document for "
+                    f"{punch_list.punch_list_number} was replaced. "
+                    f"Reason: {replacement_reason}"
+                ),
+            )
 
-    messages.success(
-        request,
-        "The signed punch-list document was uploaded successfully."
-    )
+        else:
+            # Preserve the original initial-upload behaviour.
+            punch_list.status = PunchList.Status.SIGNED
+            punch_list.signed_at = timezone.now()
+            punch_list.save(
+                update_fields=["status", "signed_at"]
+            )
+
+            RFIHistory.objects.create(
+                rfi=punch_list.rfi,
+                user=request.user,
+                action="SIGNED_PUNCH_LIST_UPLOADED",
+                description=(
+                    f"Client-signed document uploaded for punch list "
+                    f"{punch_list.punch_list_number}."
+                ),
+            )
+
+    if is_replacement:
+        messages.success(
+            request,
+            "The signed punch-list document was replaced successfully."
+        )
+    else:
+        messages.success(
+            request,
+            "The signed punch-list document was uploaded successfully."
+        )
 
     return redirect(
         "punch_list_detail",
         punch_list_id=punch_list.id,
     )
+
 
 
 @login_required

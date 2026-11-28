@@ -399,13 +399,17 @@ class Inspection(models.Model):
 
     class ExecutionResult(models.TextChoices):
         ACCEPTED = "ACCEPTED", "Accepted"
+        ACCEPTED_WITH_PUNCH_LIST = (
+            "ACCEPTED_WITH_PUNCH_LIST",
+            "Accepted with Punch List"
+        )
         REJECTED = "REJECTED", "Rejected"
         POSTPONED = "POSTPONED", "Postponed"
         CANCELLED = "CANCELLED", "Cancelled"
         PARTIALLY_ACCEPTED = (
             "PARTIALLY_ACCEPTED",
             "Partially Accepted"
-        )
+    )
 
     rfi = models.ForeignKey(
         RFI,
@@ -870,6 +874,18 @@ class Document(models.Model):
 
     description = models.CharField(
         max_length=255,
+        blank=True
+    )
+
+    superseded_by = models.ForeignKey(
+        "self",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="previous_versions",
+    )
+
+    replacement_reason = models.TextField(
         blank=True
     )
 
