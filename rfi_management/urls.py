@@ -2,6 +2,7 @@
 
 from .views import (
     dashboard_view,
+    inspector_workload_view,
     login_view,
     logout_view,
     rfi_create_view,
@@ -38,6 +39,12 @@ urlpatterns = [
         "dashboard/",
         dashboard_view,
         name="dashboard",
+    ),
+
+    path(
+        "inspector-workload/",
+        inspector_workload_view,
+        name="inspector_workload",
     ),
 
     path(

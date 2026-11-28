@@ -1,0 +1,688 @@
+
+{% extends "rfi_management/base.html" %}
+
+{% block title %}Inspector Workload | QC RFI Management System{% endblock %}
+
+{% block extra_css %}
+<style>
+.workload-page {
+    max-width: 1440px;
+    margin: 0 auto;
+    color: #172b4d;
+}
+
+.workload-page .welcome {
+    padding: 30px 35px;
+    margin-bottom: 28px;
+    border-radius: 16px;
+    background: linear-gradient(115deg, #102544, #2459a9);
+    color: white;
+}
+
+.workload-page .welcome h1 {
+    margin: 0 0 8px;
+    font-size: 1.8rem;
+    font-weight: 800;
+}
+
+.workload-page .welcome p {
+    margin: 0;
+    color: #d4e2f5;
+    line-height: 1.6;
+}
+
+.workload-page .panel {
+    padding: 25px;
+    margin-bottom: 22px;
+    border: 1px solid #e1e8f0;
+    border-radius: 15px;
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(23,43,77,.035);
+}
+
+.workload-page .panel h2 {
+    margin: 0 0 7px;
+    color: #172b4d;
+    font-size: 1.15rem;
+    font-weight: 800;
+}
+
+.workload-page .panel-description {
+    margin: 0 0 20px;
+    color: #718096;
+    font-size: .86rem;
+    line-height: 1.6;
+}
+
+.workload-page .search-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.workload-page .search-form input {
+    flex: 1;
+    min-width: 220px;
+    padding: 12px 14px;
+    border: 1px solid #d8e1ec;
+    border-radius: 9px;
+    font-size: .9rem;
+}
+
+.workload-page .search-form button {
+    padding: 12px 22px;
+    border: 0;
+    border-radius: 9px;
+    background: #2459a9;
+    color: white;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.workload-page .search-form button:hover {
+    background: #173f80;
+}
+
+.workload-page .inspector-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 12px;
+}
+
+.workload-page .inspector-link {
+    display: block;
+    padding: 16px;
+    border: 1px solid #e1e8f0;
+    border-radius: 11px;
+    color: #172b4d;
+    text-decoration: none;
+    transition: .2s ease;
+}
+
+.workload-page .inspector-link:hover {
+    border-color: #8eb4e8;
+    background: #f5f9ff;
+    transform: translateY(-2px);
+}
+
+.workload-page .inspector-name {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 800;
+}
+
+.workload-page .inspector-username {
+    color: #718096;
+    font-size: .8rem;
+}
+
+.workload-page .empty-state {
+    padding: 25px;
+    color: #718096;
+    text-align: center;
+    background: #f8fafc;
+    border-radius: 10px;
+}
+
+
+/* Dashboard sidebar layout */
+.qc-dashboard-layout {
+    display: grid;
+    grid-template-columns: 250px minmax(0, 1fr);
+    min-height: 100vh;
+    background: #f4f7fb;
+}
+
+.qc-sidebar {
+    min-height: 100%;
+    padding: 28px 18px;
+    background: #14243a;
+    color: #fff;
+}
+
+.qc-sidebar-brand {
+    padding: 0 12px 28px;
+    border-bottom: 1px solid rgba(255,255,255,.12);
+    margin-bottom: 25px;
+}
+
+.qc-sidebar-brand h2 {
+    margin: 0;
+    color: #fff;
+    font-size: 17px;
+}
+
+.qc-sidebar-brand p {
+    margin: 5px 0 0;
+    color: #9fb1c8;
+    font-size: 11px;
+}
+
+.qc-sidebar-label {
+    margin: 20px 12px 10px;
+    color: #8298b4;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.qc-sidebar a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    margin-bottom: 5px;
+    border-radius: 8px;
+    color: #d5dfec;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.qc-sidebar a:hover,
+.qc-sidebar a.active {
+    background: #2459a9;
+    color: #fff;
+}
+
+.qc-sidebar a span {
+    width: 22px;
+    text-align: center;
+    font-weight: 800;
+}
+
+.qc-dashboard-main {
+    min-width: 0;
+    padding: 32px;
+}
+
+
+/* Selected inspector workload */
+.workload-page .selected-inspector {
+    border-left: 4px solid #2459a9;
+}
+
+.workload-page .inspector-profile {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin-bottom: 22px;
+}
+
+.workload-page .inspector-profile h3 {
+    margin: 0 0 5px;
+    color: #172b4d;
+    font-size: 1.15rem;
+    font-weight: 800;
+}
+
+.workload-page .inspector-profile p {
+    margin: 0;
+    color: #718096;
+    font-size: .84rem;
+}
+
+.workload-page .total-rfi {
+    padding: 13px 20px;
+    border-radius: 10px;
+    background: #edf4ff;
+    text-align: center;
+}
+
+.workload-page .total-rfi strong {
+    display: block;
+    color: #2459a9;
+    font-size: 1.7rem;
+}
+
+.workload-page .total-rfi span {
+    color: #64748b;
+    font-size: .75rem;
+    font-weight: 700;
+}
+
+.workload-page .status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px;
+    margin-bottom: 25px;
+}
+
+.workload-page .status-card {
+    padding: 15px;
+    border: 1px solid #e1e8f0;
+    border-radius: 10px;
+    background: #f8fafc;
+}
+
+.workload-page .status-card span {
+    display: block;
+    margin-bottom: 7px;
+    color: #718096;
+    font-size: .76rem;
+    font-weight: 700;
+}
+
+.workload-page .status-card strong {
+    color: #172b4d;
+    font-size: 1.45rem;
+}
+
+.workload-page .rfi-table-wrap {
+    overflow-x: auto;
+}
+
+.workload-page .rfi-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.workload-page .rfi-table th,
+.workload-page .rfi-table td {
+    padding: 14px 12px;
+    border-bottom: 1px solid #edf1f6;
+    text-align: left;
+    white-space: nowrap;
+    font-size: .82rem;
+}
+
+.workload-page .rfi-table th {
+    background: #f8fafc;
+    color: #64748b;
+    font-size: .72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.workload-page .rfi-table td {
+    color: #405875;
+}
+
+.workload-page .rfi-table tr:last-child td {
+    border-bottom: 0;
+}
+
+.workload-page .status-badge {
+    display: inline-block;
+    padding: 5px 9px;
+    border-radius: 20px;
+    background: #edf4ff;
+    color: #2459a9;
+    font-size: .72rem;
+    font-weight: 800;
+}
+
+.workload-page .rfi-number-link {
+    color: #2459a9;
+    text-decoration: none;
+    font-weight: 800;
+}
+
+.workload-page .rfi-number-link:hover {
+    color: #173f80;
+    text-decoration: underline;
+}
+
+
+/* Responsive layout */
+@media (max-width: 850px) {
+    .qc-dashboard-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .qc-sidebar {
+        padding: 15px;
+    }
+
+    .qc-sidebar-brand {
+        padding-bottom: 14px;
+        margin-bottom: 12px;
+    }
+
+    .qc-sidebar-label {
+        margin-top: 12px;
+    }
+
+    .qc-dashboard-main {
+        padding: 20px 15px;
+    }
+}
+
+
+@media (max-width: 600px) {
+    .workload-page .welcome {
+        padding: 24px;
+    }
+
+    .workload-page .panel {
+        padding: 18px;
+    }
+
+    .workload-page .search-form {
+        flex-direction: column;
+    }
+
+    .workload-page .search-form input,
+    .workload-page .search-form button {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="qc-dashboard-layout">
+
+    <aside class="qc-sidebar">
+        <div class="qc-sidebar-brand">
+            <h2>QC RFI System</h2>
+            <p>Inspection Management</p>
+        </div>
+
+        <p class="qc-sidebar-label">Main Menu</p>
+
+        <a href="{% url 'dashboard' %}">
+            <span>⌂</span> Dashboard
+        </a>
+
+        <a href="{% url 'rfi_list' %}">
+            <span>R</span> RFI Register
+        </a>
+
+        <a href="{% url 'rfi_create' %}">
+            <span>+</span> Receive New RFI
+        </a>
+
+        <a href="{% url 'inspector_workload' %}" class="active">
+            <span>I</span> Inspector Workload
+        </a>
+
+        <a href="{% url 'rfi_list' %}">
+            <span>A</span> Assignments
+        </a>
+
+        <p class="qc-sidebar-label">Account</p>
+
+        <a href="{% url 'change_own_password' %}">
+            <span>P</span> Change Password
+        </a>
+
+        <a href="{% url 'logout' %}">
+            <span>↪</span> Sign Out
+        </a>
+    </aside>
+
+    <section class="qc-dashboard-main">
+        <div class="workload-page">
+            <section class="welcome">
+                <h1>Inspector Workload</h1>
+                <p>
+                    Search for a QC Inspector to review their RFI records,
+                    current workload, and inspection progress.
+                </p>
+                
+            <form method="get"
+                action="{% url 'inspector_workload' %}"
+                id="workloadExportForm"
+                style="margin-top: 18px;">
+
+                <input type="hidden" name="export" value="excel">
+                <input type="hidden"
+                    name="inspector"
+                    value="{{ selected_inspector.id|default:'' }}">
+
+                <div style="display: flex; flex-wrap: wrap; align-items: end; gap: 12px;">
+                    <div>
+                        <label for="reportScope"
+                            style="display:block; margin-bottom:6px; font-weight:700;">
+                            Report Scope
+                        </label>
+
+                        <select name="scope" id="reportScope" required
+                                style="padding:10px; border-radius:7px; min-width:170px;">
+                            <option value="all">All QC Inspectors</option>
+                            <option value="selected" {% if not selected_inspector %}disabled{% endif %}>
+                                Selected QC Inspector
+                            </option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label for="reportPeriod"
+                            style="display:block; margin-bottom:6px; font-weight:700;">
+                            Reporting Period
+                        </label>
+
+                        <select name="period" id="reportPeriod" required
+                                style="padding:10px; border-radius:7px; min-width:170px;">
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="custom">Custom Date Range</option>
+                        </select>
+                    </div>
+
+                    <div id="singleDateField">
+                        <label for="reportDate"
+                            style="display:block; margin-bottom:6px; font-weight:700;">
+                            Select Date
+                        </label>
+
+                        <input type="date" name="date" id="reportDate" required
+                            style="padding:9px; border-radius:7px;">
+                    </div>
+
+                    <div id="customDateFields" style="display:none; gap:12px;">
+
+                        <div>
+                            <label for="startDate"
+                                style="display:block; margin-bottom:6px; font-weight:700;">
+                                Start Date
+                            </label>
+
+                            <input type="date" name="start_date" id="startDate"
+                                style="padding:9px; border-radius:7px;">
+                        </div>
+
+                        <div>
+                            <label for="endDate"
+                                style="display:block; margin-bottom:6px; font-weight:700;">
+                                End Date
+                            </label>
+
+                            <input type="date" name="end_date" id="endDate"
+                                style="padding:9px; border-radius:7px;">
+                        </div>
+
+                    </div>
+
+                    <button type="submit"
+                            class="btn btn-success"
+                            style="padding:11px 20px; border:0; border-radius:7px; cursor:pointer;">
+                        <i class="fas fa-file-excel"></i>
+                        Download Excel Report
+                    </button>
+
+                </div>
+            </form>
+
+            </section>
+
+            <section class="panel">
+                <h2>Find a QC Inspector</h2>
+                <p class="panel-description">
+                    Search by inspector's first name, last name, or username.
+                </p>
+
+                <form method="get" class="search-form">
+                    <input
+                        type="text"
+                        name="q"
+                        value="{{ search_query }}"
+                        placeholder="Enter inspector name or username..."
+                    >
+                    <button type="submit">Search Inspectors</button>
+                </form>
+            </section>
+
+            <section class="panel">
+                <h2>Inspector Search Results</h2>
+                <p class="panel-description">
+                    Select an inspector to view their workload and RFI records.
+                </p>
+
+                <div class="inspector-list">
+                    {% for inspector in inspectors %}
+                        <a
+                            class="inspector-link"
+                            href="?q={{ search_query|urlencode }}&inspector={{ inspector.user_id }}"
+                        >
+                            <span class="inspector-name">
+                                {{ inspector.user.get_full_name|default:inspector.user.username }}
+                            </span>
+                            <span class="inspector-username">
+                                @{{ inspector.user.username }}
+                            </span>
+                        </a>
+                    {% empty %}
+                        <div class="empty-state">
+                            No active QC Inspectors found matching your search.
+                        </div>
+                    {% endfor %}
+                </div>
+            </section>
+
+            {% if selected_inspector %}
+            <section class="panel selected-inspector">
+
+                <div class="inspector-profile">
+                    <div>
+                        <h3>
+                            {{ selected_inspector.get_full_name|default:selected_inspector.username }}
+                        </h3>
+                        <p>@{{ selected_inspector.username }} · QC Inspector</p>
+                    </div>
+
+                    <div class="total-rfi">
+                        <strong>{{ assigned_rfi_total }}</strong>
+                        <span>Total Associated RFIs</span>
+                    </div>
+                </div>
+
+                <h2>RFI Status Breakdown</h2>
+                <p class="panel-description">
+                    Current status of RFIs registered by or currently assigned to this inspector.
+                </p>
+
+                <div class="status-grid">
+                    {% for card in status_cards %}
+                    <div class="status-card">
+                        <span>{{ card.label }}</span>
+                        <strong>{{ card.count }}</strong>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <h2>Inspector RFI Records</h2>
+                <p class="panel-description">
+                    Complete list of RFIs associated with this inspector.
+                </p>
+
+                <div class="rfi-table-wrap">
+                    <table class="rfi-table">
+                        <thead>
+                            <tr>
+                                <th>RFI Number</th>
+                                <th>Date Received</th>
+                                <th>Planned Inspection</th>
+                                <th>Current Status</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for rfi in assigned_rfis %}
+                            <tr>
+                                <td>
+                                    <strong>
+                                        <a href="{% url 'rfi_detail' rfi.pk %}"
+                                        class="rfi-number-link">
+                                            {{ rfi.rfi_number }}
+                                        </a>
+                                    </strong>
+                                </td>
+                                <td>{{ rfi.date_received|date:"d M Y"|default:"—" }}</td>
+                                <td>
+                                    {% if rfi.current_planned_start %}
+                                        {{ rfi.current_planned_start|date:"d M Y" }}
+                                        {% if rfi.current_planned_end and rfi.current_planned_end != rfi.current_planned_start %}
+                                            – {{ rfi.current_planned_end|date:"d M Y" }}
+                                        {% endif %}
+                                    {% else %}
+                                        —
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="status-badge">
+                                        {{ rfi.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center">
+                                    No associated RFIs found for this inspector.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+            </section>
+            {% endif %}
+        </div>
+    </section>
+</div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const periodSelect = document.getElementById("reportPeriod");
+    const singleDateField = document.getElementById("singleDateField");
+    const customDateFields = document.getElementById("customDateFields");
+
+    const reportDate = document.getElementById("reportDate");
+    const startDate = document.getElementById("startDate");
+    const endDate = document.getElementById("endDate");
+
+    function updateDateFields() {
+        const isCustom = periodSelect.value === "custom";
+
+        singleDateField.style.display = isCustom ? "none" : "block";
+        customDateFields.style.display = isCustom ? "flex" : "none";
+
+        reportDate.required = !isCustom;
+        startDate.required = isCustom;
+        endDate.required = isCustom;
+    }
+
+    periodSelect.addEventListener("change", updateDateFields);
+
+    updateDateFields();
+    // Default the reporting date to today.
+    reportDate.value = new Date().toLocaleDateString("en-CA");
+
+    startDate.addEventListener("change", function () {
+        endDate.min = startDate.value;
+    });
+
+    endDate.addEventListener("change", function () {
+        startDate.max = endDate.value;
+    });
+});
+</script>
+
+{% endblock %}

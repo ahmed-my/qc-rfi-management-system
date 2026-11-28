@@ -159,6 +159,23 @@
     box-shadow: 0 4px 12px rgba(23,43,77,.035);
 }
 
+.qc-dashboard .qc-stat-card-link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.qc-dashboard .qc-stat-card-link:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(23,43,77,.10);
+}
+
+.qc-dashboard .qc-stat-card-link:focus-visible {
+    outline: 3px solid #3b82f6;
+    outline-offset: 3px;
+}
+
 .qc-dashboard .qc-stat-top {
     display: flex;
     justify-content: space-between;
@@ -674,6 +691,57 @@
                         </span>
                     </div>
                 </section>
+
+                {% if profile.role == "ADMIN" or profile.role == "SUPERVISOR" or profile.role == "INSPECTOR" %}
+                    <section class="qc-section">
+                        <div class="qc-section-heading">
+                            <div>
+                                <h2>RFI Status Overview</h2>
+                                <p>Click any status to view the corresponding RFI records.</p>
+                            </div>
+                            <div class="qc-stat-caption">
+                                Total RFIs: {{ rfi_total }}
+                            </div>
+                        </div>
+
+                        <div class="qc-stats-grid">
+                            <a class="qc-stat-card qc-stat-card-link"
+                            href="{% if profile.role == 'INSPECTOR' %}{% url 'inspector_rfi_list' %}{% else %}{% url 'rfi_list' %}{% endif %}">
+                                <div class="qc-stat-top">
+                                    <p class="qc-stat-label">All RFIs</p>
+                                    <span class="qc-stat-icon">R</span>
+                                </div>
+                                <p class="qc-stat-number">{{ rfi_total }}</p>
+                                <p class="qc-stat-caption">View all accessible RFIs</p>
+                            </a>
+
+                            <a class="qc-stat-card qc-stat-card-link"
+                            href="{% if profile.role == 'INSPECTOR' %}{% url 'inspector_rfi_list' %}{% else %}{% url 'rfi_list' %}{% endif %}?status=ONGOING">
+                                <div class="qc-stat-top">
+                                    <p class="qc-stat-label">Ongoing</p>
+                                    <span class="qc-stat-icon">O</span>
+                                </div>
+                                <p class="qc-stat-number">{{ rfi_ongoing }}</p>
+                                <p class="qc-stat-caption">Assigned and under inspection</p>
+                            </a>
+
+                            {% for card in rfi_status_cards %}
+                                <a class="qc-stat-card qc-stat-card-link"
+                                href="{% if profile.role == 'INSPECTOR' %}{% url 'inspector_rfi_list' %}{% else %}{% url 'rfi_list' %}{% endif %}?status={{ card.status|urlencode }}">
+                                    <div class="qc-stat-top">
+                                        <p class="qc-stat-label">{{ card.label }}</p>
+                                        <span class="qc-stat-icon">R</span>
+                                    </div>
+                                    <p class="qc-stat-number">{{ card.count }}</p>
+                                    <p class="qc-stat-caption">View {{ card.label|lower }} RFIs</p>
+                                </a>
+                            {% endfor %}
+                        </div>
+                    </section>
+                {% endif %}
+
+
+
                 {% if profile.role == "ADMIN" %}
                     <section class="qc-section">
                         <div class="qc-section-heading">
@@ -826,6 +894,61 @@
                                 </p>
                             </div>
                         </div>
+
+                        <section class="qc-section">
+                            <div class="qc-section-heading">
+                                <div>
+                                    <h2>Inspector Workload Overview</h2>
+                                    <p>Current RFI distribution and overdue assignments by QC Inspector.</p>
+                                </div>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>QC Inspector</th>
+                                            <th>Total</th>
+                                            <th>Assigned</th>
+                                            <th>Under Inspection</th>
+                                            <th>Awaiting Punch</th>
+                                            <th>Overdue</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in inspector_workload %}
+                                        <tr>
+                                            <td>
+                                                <strong>
+                                                    {{ item.inspector.get_full_name|default:item.inspector.username }}
+                                                </strong>
+                                            </td>
+                                            <td>{{ item.total }}</td>
+                                            <td>{{ item.assigned }}</td>
+                                            <td>{{ item.under_inspection }}</td>
+                                            <td>{{ item.awaiting_punch }}</td>
+                                            <td>
+                                                {% if item.overdue > 0 %}
+                                                    <span class="badge bg-danger">
+                                                        {{ item.overdue }}
+                                                    </span>
+                                                {% else %}
+                                                    <span class="badge bg-success">0</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="6" class="text-center">
+                                                No active QC Inspectors found.
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
                         <div class="qc-actions-grid">
                             <article class="qc-action-card">
                                 <div aria-hidden="true" class="qc-action-icon">
@@ -913,6 +1036,9 @@
                             </article>
                         </div>
                     </section>
+
+
+
                 {% elif profile.role == "INSPECTOR" %}
                     <section class="qc-section">
                         <div class="qc-section-heading">

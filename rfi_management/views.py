@@ -15,7 +15,8 @@ from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.db import transaction, IntegrityError
-from django.db.models import Max, Q, Sum
+
+from django.db.models import Count, Max, Q, Sum
 
 from .forms import (
     LoginForm,
@@ -126,6 +127,7 @@ def login_view(request):
     )
 
 
+
 @login_required
 def dashboard_view(request):
     """
@@ -139,9 +141,7 @@ def dashboard_view(request):
             request,
             "Your account does not have a QC profile.",
         )
-
         logout(request)
-
         return redirect("login")
 
     if not profile.is_active_qc:
@@ -149,9 +149,7 @@ def dashboard_view(request):
             request,
             "Your QC access is inactive.",
         )
-
         logout(request)
-
         return redirect("login")
 
     context = {
@@ -187,38 +185,104 @@ def dashboard_view(request):
             "-recorded_at"
         ).first()
 
-    elif profile.role == UserProfile.Role.INSPECTOR:
+    if profile.role in [
+        UserProfile.Role.ADMIN,
+        UserProfile.Role.SUPERVISOR,
+        UserProfile.Role.INSPECTOR,
+    ]:
 
-        inspector_rfis = (
-            RFI.objects.filter(
+        if profile.role == UserProfile.Role.INSPECTOR:
+            dashboard_rfis = RFI.objects.filter(
                 Q(created_by=request.user)
                 | Q(
                     assignments__inspector=request.user,
                     assignments__unassigned_at__isnull=True,
                 )
+            ).distinct()
+        else:
+            dashboard_rfis = RFI.objects.all()
+
+        status_counts = {
+            status: dashboard_rfis.filter(status=status).count()
+            for status, label in RFI.Status.choices
+        }
+
+        context["rfi_status_cards"] = [
+            {
+                "status": status,
+                "label": label,
+                "count": status_counts.get(status, 0),
+            }
+            for status, label in RFI.Status.choices
+        ]
+
+        context["rfi_status_counts"] = status_counts
+
+        context["rfi_total"] = dashboard_rfis.count()
+
+        context["rfi_ongoing"] = (
+            status_counts.get(RFI.Status.ASSIGNED, 0)
+            + status_counts.get(RFI.Status.UNDER_INSPECTION, 0)
+        )
+
+        if profile.role == UserProfile.Role.INSPECTOR:
+            context["inspector_total_rfis"] = dashboard_rfis.count()
+            context["inspector_overdue_rfis"] = status_counts.get(
+                RFI.Status.OVERDUE, 0
             )
-            .distinct()
-        )
+            context["inspector_awaiting_punch_rfis"] = status_counts.get(
+                RFI.Status.AWAITING_PUNCH, 0
+            )
+            context["inspector_closed_rfis"] = status_counts.get(
+                RFI.Status.CLOSED, 0
+            )
 
-        context["inspector_total_rfis"] = inspector_rfis.count()
+            context["inspector_recent_rfis"] = (
+                dashboard_rfis
+                .select_related("created_by")
+                .order_by("-created_at")[:5]
+            )
 
-        context["inspector_overdue_rfis"] = inspector_rfis.filter(
-            status=RFI.Status.OVERDUE
-        ).count()
+        elif profile.role == UserProfile.Role.SUPERVISOR:
+            inspectors = UserProfile.objects.filter(
+                role=UserProfile.Role.INSPECTOR,
+                is_active_qc=True,
+            ).select_related("user").order_by(
+                "user__first_name",
+                "user__last_name",
+            )
 
-        context["inspector_awaiting_punch_rfis"] = inspector_rfis.filter(
-            status=RFI.Status.AWAITING_PUNCH
-        ).count()
+            inspector_workload = []
 
-        context["inspector_closed_rfis"] = inspector_rfis.filter(
-            status=RFI.Status.CLOSED
-        ).count()
+            for inspector_profile in inspectors:
+                inspector = inspector_profile.user
 
-        context["inspector_recent_rfis"] = (
-            inspector_rfis
-            .select_related("created_by")
-            .order_by("-created_at")[:5]
-        )
+                assigned_rfis = RFI.objects.filter(
+                    assignments__inspector=inspector,
+                    assignments__unassigned_at__isnull=True,
+                ).distinct()
+
+                inspector_workload.append({
+                    "inspector": inspector,
+                    "total": assigned_rfis.count(),
+                    "overdue": assigned_rfis.filter(
+                        status=RFI.Status.OVERDUE
+                    ).count(),
+                    "assigned": assigned_rfis.filter(
+                        status=RFI.Status.ASSIGNED
+                    ).count(),
+                    "under_inspection": assigned_rfis.filter(
+                        status=RFI.Status.UNDER_INSPECTION
+                    ).count(),
+                    "awaiting_punch": assigned_rfis.filter(
+                        status=RFI.Status.AWAITING_PUNCH
+                    ).count(),
+                    "closed": assigned_rfis.filter(
+                        status=RFI.Status.CLOSED
+                    ).count(),
+                })
+
+            context["inspector_workload"] = inspector_workload
 
     return render(
         request,
@@ -226,6 +290,404 @@ def dashboard_view(request):
         context,
     )
 
+def build_inspector_workload_excel(inspectors, start_date=None, end_date=None):
+    """Build an Excel workbook containing inspector summaries and RFI details."""
+
+    workbook = Workbook()
+
+    summary_ws = workbook.active
+    summary_ws.title = "Inspector Summary"
+
+    details_ws = workbook.create_sheet("RFI Details")
+
+    header_fill = PatternFill(
+        fill_type="solid",
+        fgColor="14243A",
+    )
+    header_font = Font(
+        bold=True,
+        color="FFFFFF",
+    )
+    header_alignment = Alignment(
+        horizontal="center",
+        vertical="center",
+        wrap_text=True,
+    )
+
+    # -------------------------
+    # Worksheet 1: Summary
+    # -------------------------
+    status_choices = list(RFI.Status.choices)
+
+    summary_headers = [
+        "Inspector Name",
+        "Username",
+        "Total RFIs",
+    ] + [label for value, label in status_choices]
+
+    summary_ws.append(summary_headers)
+
+    # -------------------------
+    # Worksheet 2: RFI Details
+    # -------------------------
+    detail_headers = [
+        "Inspector Name",
+        "Username",
+        "RFI Number",
+        "Date Received",
+        "Original Planned Start",
+        "Original Planned End",
+        "Current Planned Start",
+        "Current Planned End",
+        "Current Status",
+    ]
+
+    details_ws.append(detail_headers)
+
+    for inspector_profile in inspectors:
+        inspector = inspector_profile.user
+
+        inspector_name = (
+            inspector.get_full_name().strip()
+            or inspector.username
+        )
+
+        inspector_rfis = RFI.objects.filter(
+            Q(created_by=inspector)
+            | Q(
+                assignments__inspector=inspector,
+                assignments__unassigned_at__isnull=True,
+            )
+        ).distinct()
+
+        # Apply reporting period using Date Received.
+        if start_date and end_date:
+            inspector_rfis = inspector_rfis.filter(
+                date_received__gte=start_date,
+                date_received__lte=end_date,
+            )
+
+        inspector_rfis = inspector_rfis.order_by("rfi_number")
+
+        # Count RFIs by status without double-counting.
+        status_counts = dict(
+            inspector_rfis
+            .order_by()
+            .values("status")
+            .annotate(total=Count("id"))
+            .values_list("status", "total")
+        )
+
+        total_rfis = inspector_rfis.count()
+        total_rfis = sum(status_counts.values())
+
+        summary_row = [
+            inspector_name,
+            inspector.username,
+            total_rfis,
+        ] + [
+            status_counts.get(status, 0)
+            for status, label in status_choices
+        ]
+
+        summary_ws.append(summary_row)
+
+        # Add individual RFI records.
+        for rfi in inspector_rfis:
+            details_ws.append([
+                inspector_name,
+                inspector.username,
+                rfi.rfi_number,
+                rfi.date_received,
+                rfi.original_planned_start,
+                rfi.original_planned_end,
+                rfi.current_planned_start,
+                rfi.current_planned_end,
+                rfi.get_status_display(),
+            ])
+
+    # -------------------------
+    # Apply worksheet formatting
+    # -------------------------
+    for worksheet in [summary_ws, details_ws]:
+        worksheet.freeze_panes = "A2"
+        worksheet.auto_filter.ref = worksheet.dimensions
+        worksheet.row_dimensions[1].height = 35
+
+        for cell in worksheet[1]:
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = header_alignment
+
+        for column_cells in worksheet.columns:
+            column_letter = get_column_letter(
+                column_cells[0].column
+            )
+
+            max_length = max(
+                (
+                    len(str(cell.value))
+                    for cell in column_cells
+                    if cell.value is not None
+                ),
+                default=0,
+            )
+
+            worksheet.column_dimensions[column_letter].width = min(
+                max(max_length + 3, 14),
+                40,
+            )
+
+    # Format date columns in the RFI Details worksheet.
+    for row in details_ws.iter_rows(min_row=2):
+        for cell in row[3:8]:
+            cell.number_format = "dd mmm yyyy"
+
+    return workbook
+
+
+@login_required
+def inspector_workload_view(request):
+    """Allow Supervisors to search and inspect QC Inspector workloads."""
+
+    profile = getattr(request.user, "profile", None)
+
+    if (
+        profile is None
+        or profile.role != UserProfile.Role.SUPERVISOR
+        or not profile.is_active_qc
+    ):
+        messages.error(
+            request,
+            "You do not have permission to access inspector workloads.",
+        )
+        return redirect("dashboard")
+
+    # Export Excel report for all active QC Inspectors.
+    if request.GET.get("export") == "excel":
+
+        period = request.GET.get("period", "").lower()
+
+        if period not in ["daily", "weekly", "monthly", "custom"]:
+            return HttpResponse(
+                "Invalid reporting period.",
+                status=400,
+            )
+
+        try:
+            if period == "custom":
+                start_date = date.fromisoformat(
+                    request.GET.get("start_date", "")
+                )
+                end_date = date.fromisoformat(
+                    request.GET.get("end_date", "")
+                )
+
+                if start_date > end_date:
+                    return HttpResponse(
+                        "Start date cannot be later than end date.",
+                        status=400,
+                    )
+
+                period_label = "Custom Date Range"
+
+            else:
+                selected_date = date.fromisoformat(
+                    request.GET.get("date", "")
+                )
+
+                if period == "daily":
+                    start_date = selected_date
+                    end_date = selected_date
+                    period_label = "Daily"
+
+                elif period == "weekly":
+                    start_date = selected_date - timedelta(
+                        days=selected_date.weekday()
+                    )
+                    end_date = start_date + timedelta(days=6)
+                    period_label = "Weekly"
+
+                else:
+                    start_date = selected_date.replace(day=1)
+
+                    if selected_date.month == 12:
+                        next_month = date(
+                            selected_date.year + 1, 1, 1
+                        )
+                    else:
+                        next_month = date(
+                            selected_date.year,
+                            selected_date.month + 1,
+                            1,
+                        )
+
+                    end_date = next_month - timedelta(days=1)
+                    period_label = "Monthly"
+
+        except (ValueError, TypeError):
+            return HttpResponse(
+                "Please provide valid reporting dates.",
+                status=400,
+            )
+
+        # Determine the reporting scope.
+        scope = request.GET.get("scope", "all").lower()
+
+        if scope == "selected":
+            selected_inspector_id = request.GET.get(
+                "inspector", ""
+            ).strip()
+
+            if not selected_inspector_id:
+                return HttpResponse(
+                    "Please select a QC Inspector first.",
+                    status=400,
+                )
+
+            try:
+                selected_inspector_id = int(selected_inspector_id)
+            except ValueError:
+                return HttpResponse(
+                    "Invalid QC Inspector selected.",
+                    status=400,
+                )
+
+            all_active_inspectors = UserProfile.objects.filter(
+                role=UserProfile.Role.INSPECTOR,
+                is_active_qc=True,
+                user__is_active=True,
+                user_id=selected_inspector_id,
+            ).select_related("user")
+
+            if not all_active_inspectors.exists():
+                return HttpResponse(
+                    "The selected QC Inspector is not active or does not exist.",
+                    status=404,
+                )
+
+        elif scope == "all":
+            all_active_inspectors = UserProfile.objects.filter(
+                role=UserProfile.Role.INSPECTOR,
+                is_active_qc=True,
+                user__is_active=True,
+            ).select_related("user").order_by(
+                "user__first_name",
+                "user__last_name",
+                "user__username",
+            )
+
+        else:
+            return HttpResponse(
+                "Invalid reporting scope.",
+                status=400,
+            )
+
+        workbook = build_inspector_workload_excel(
+            all_active_inspectors,
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+        output = BytesIO()
+        workbook.save(output)
+        output.seek(0)
+
+        response = HttpResponse(
+            output.getvalue(),
+            content_type=(
+                "application/vnd.openxmlformats-officedocument."
+                "spreadsheetml.sheet"
+            ),
+        )
+
+        scope_label = (
+            "selected_inspector"
+            if scope == "selected"
+            else "all_inspectors"
+        )
+
+        filename = (
+            f"qc_workload_{scope_label}_{period}_"
+            f"{start_date:%Y%m%d}_{end_date:%Y%m%d}.xlsx"
+        )
+
+        response["Content-Disposition"] = (
+            f'attachment; filename="{filename}"'
+        )
+
+        return response
+    
+    inspectors = UserProfile.objects.filter(
+        role=UserProfile.Role.INSPECTOR,
+        is_active_qc=True,
+        user__is_active=True,
+    ).select_related("user").order_by(
+        "user__first_name",
+        "user__last_name",
+        "user__username",
+    )
+
+    search_query = request.GET.get("q", "").strip()
+    selected_inspector_id = request.GET.get("inspector", "").strip()
+
+    if search_query:
+        inspectors = inspectors.filter(
+            Q(user__first_name__icontains=search_query)
+            | Q(user__last_name__icontains=search_query)
+            | Q(user__username__icontains=search_query)
+        )
+
+    selected_profile = None
+    assigned_rfis = RFI.objects.none()
+    status_cards = []
+
+    if selected_inspector_id:
+        selected_profile = inspectors.filter(
+            user_id=selected_inspector_id
+        ).first()
+
+        if selected_profile:
+            selected_inspector = selected_profile.user
+
+            assigned_rfis = RFI.objects.filter(
+                Q(created_by=selected_inspector)
+                | Q(
+                    assignments__inspector=selected_inspector,
+                    assignments__unassigned_at__isnull=True,
+                )
+            ).distinct().order_by(
+                "-date_received",
+                "-created_at",
+            )
+
+            status_cards = [
+                {
+                    "status": status,
+                    "label": label,
+                    "count": assigned_rfis.filter(
+                        status=status
+                    ).count(),
+                }
+                for status, label in RFI.Status.choices
+            ]
+
+    context = {
+        "inspectors": inspectors,
+        "search_query": search_query,
+        "selected_inspector": (
+            selected_profile.user if selected_profile else None
+        ),
+        "assigned_rfis": assigned_rfis,
+        "status_cards": status_cards,
+        "assigned_rfi_total": assigned_rfis.count(),
+    }
+
+    return render(
+        request,
+        "rfi_management/inspector_workload.html",
+        context,
+    )
 
 @login_required
 def user_list_view(request):
@@ -919,6 +1381,7 @@ def rfi_list_view(request):
 
     query = request.GET.get("q", "").strip()
     result_filter = request.GET.get("result", "").strip()
+    status_filter = request.GET.get("status", "").strip()
 
     rfis = RFI.objects.select_related(
         "created_by"
@@ -926,6 +1389,16 @@ def rfi_list_view(request):
         "-date_received",
         "-created_at",
     )
+
+    if status_filter in dict(RFI.Status.choices):
+        rfis = rfis.filter(status=status_filter)
+    elif status_filter == "ONGOING":
+        rfis = rfis.filter(
+            status__in=[
+                RFI.Status.ASSIGNED,
+                RFI.Status.UNDER_INSPECTION,
+            ]
+        )
 
     if query:
         rfis = rfis.filter(
@@ -986,6 +1459,7 @@ def rfi_list_view(request):
             "search_query": query,
             "rfi_count": rfis.count(),
             "result_filter": result_filter,
+            "status_filter": status_filter,
         },
     )
 
@@ -1453,6 +1927,7 @@ def inspector_rfi_list_view(request):
 
     search_query = request.GET.get("q", "").strip()
     result_filter = request.GET.get("result", "").strip()
+    status_filter = request.GET.get("status", "").strip()
 
     assigned_rfis = (
         RFI.objects.filter(
@@ -1469,6 +1944,18 @@ def inspector_rfi_list_view(request):
             "rfi_number",
         )
     )
+
+    if status_filter in dict(RFI.Status.choices):
+        assigned_rfis = assigned_rfis.filter(status=status_filter)
+    elif status_filter == "ONGOING":
+        assigned_rfis = assigned_rfis.filter(
+            status__in=[
+                RFI.Status.ASSIGNED,
+                RFI.Status.UNDER_INSPECTION,
+            ]
+        )
+    else:
+        status_filter = ""
 
     # Search by contractor RFI number or internal reference.
     if search_query:
@@ -1522,6 +2009,7 @@ def inspector_rfi_list_view(request):
             "search_query": search_query,
             "result_filter": result_filter,
             "rfi_count": assigned_rfis.count(),
+            "status_filter": status_filter,
         },
     )
 
